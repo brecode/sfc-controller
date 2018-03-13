@@ -1,0 +1,202 @@
+// Copyright (c) 2017 Cisco and/or its affiliates.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at:
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto3";
+
+package controller;
+
+message L3VRFRoute {
+    uint32 vrf_id = 1;                   /* optional: 0 by default */
+    string description = 2;              /* optional description */
+    string dst_ip_addr = 3;              /* ip address + prefix in format <address>/<prefix> */
+    string next_hop_addr = 4;            /* next hop address */
+    string outgoing_interface = 5;       /* outgoing interface name */
+    uint32 weight = 6;                   /* weight (used for unequal cost load balncing) */
+    uint32 preference = 7;               /* The preference of the path. Lowest preference is preferred.  */
+                                         /* Only paths with the best preference contribute to forwarding. */
+                                         /* (a poor man's primary and backup) */
+};
+
+message L3ArpEntry {
+    string ip_address = 1;               /* IP address */
+    string phys_address = 2;             /* MAC address matching to the IP */
+};
+
+message L2FIBEntry {
+    string dest_mac_address = 1;
+    string bd_name = 2;
+    string outgoing_if = 3;
+    string action = 4; // forward|drop
+    bool bvi = 5;
+};
+
+message BDParms {
+    string name = 1;
+    bool flood = 2;
+    bool unknown_unicast_flood = 3;
+    bool forward = 4;
+    bool learn = 5;
+    bool arp_termination = 6;
+    uint32 mac_age_minutes = 7; // 0 is no aging
+};
+
+message L2BD {
+    string name = 1;
+    BDParms bd_parms = 2;     // use this to customize or refer to a template, but not both
+    string l2bd_template = 3; // use this to refer to a template in system parameters
+}
+
+// IPAM will choose an address using the prefix.  In the example, there is an 8 bit address space [0..255]
+// if 0..255 are not desired then a start and end address can be used.  See comments below.
+message IPAMPool {
+    string name = 1;
+    string scope = 2; // node|system|vnf_service
+    string network = 3; // format 10.1.1.0/24 or ipv6
+    uint32 start_range = 4; // optional: if omitted start at 1, ie 10.1.1.1 or ipv6
+    uint32 end_range = 5;   // optional: if omitted end at (all F's - 1), ie 10.1.1.254 or ipv6
+}
+
+message SystemParameters {
+    uint32 mtu = 1; // optional, overrrides default 1500
+    uint32 default_static_route_weight = 3; // optional, overrrides default 5
+    uint32 default_static_route_preference = 4; // optional, overrrides default 0
+    repeated BDParms l2bd_templates =  5; // L2BDs can referene these
+    string rx_mode = 7; // polling|interrupt|adaptive
+}
+
+message VNFToNodeMap {
+    string vnf = 1;
+    string node = 2;
+}
+
+// The rendered vpp agent entry is identified by the key, and type, which are used
+// to read the entry from etcd
+message RenderedVppAgentEntry {
+    string vpp_agent_key = 1;
+    string vpp_agent_type = 3; // see type in vppagentapi/keys.go eg. interface|l2bd|l3vrf, etc
+}
+
+message Interface {
+    string name = 1;
+    string if_type = 2;     // ethernet|loopback|vxlan|memif|tap
+    string mac_address = 3; // format mm:aa:cc:aa:dd:rr, if omitted, sys generates one using
+                            // 02:00:00:00:00:00 as base, last octet increments
+    uint32 mtu = 4;         // optional: if omitted, use system parameter default
+    string rx_mode = 5;     // optional: polling|interrupt|adaptive or uses system defaults
+    repeated string ip_addresses = 6; // format i.p.v.4/xx, or ip::v6/xx
+    uint32 vrf_id = 7;
+    string ipam_pool_name = 8;
+    string admin_status = 9; // enabled|disabled
+    repeated string custom_labels = 10;
+    message MemIFParms {
+        string mode = 1; //ethernet|ip|puntinject optional/default: ethernet
+        string inter_vnf_conn = 2; //direct|vswitch optional/default: direct
+    }
+    MemIFParms memif_parms = 11;
+}
+
+message VNF {
+    string name = 1;     // corresponds to vnf-agent micro-service label
+    string vnf_type = 2; // vppcontainer|nonvppcontainer|vppvswitch
+    repeated Interface interfaces = 3;
+    repeated L2BD l2bds = 4; // per vswitch default l2bds [optional]
+}
+
+message Connection {
+    string conn_type = 1; // l2pp|l2mp|ip4pp|ip6pp|ip4mp|ip6mp
+    string node_overlay = 2; // needed if require inter-node vnf's
+    message Interface {
+        string vnf = 1;
+        string interface = 2;
+    }
+    repeated Interface interfaces = 3;
+    string use_node_l2bd = 4; // optional: use an existing node level l2bd
+                              // only for l2mp connections
+    L2BD l2bd = 5; // optional: if ommitted and use_node_l2bd is not set then
+                   // create a l2bd with default parms for l2mp connections
+}
+
+message Node {
+    string name = 1; // corresponds to vnf-agent micro-service label
+    message NodeTag {
+        string name = 1;
+        string value = 2;
+    }
+    repeated NodeTag tags = 2; // future use: other node identifiers?
+    string node_type = 3; // host|external
+    bool has_multiple_vswitches = 4;   // set to true if want multiple vpp vswitch containers
+    repeated Interface interfaces = 5; // use this if modelling only one vswitch per host
+    repeated VNF vswitches = 6;         // use this for multiple vswitches per host (rare)
+    repeated L2BD l2bds = 9; // per node l2bds
+}
+
+message VNFService {
+    string name = 1;
+    repeated VNF vnfs = 3;
+    repeated Connection connections = 4;
+}
+
+message NodeOverlay {
+    string name = 1;
+    string node_overlay_type = 2; // hubandspoke|mesh
+    string connection_type = 3;   //vxlan|dot1q|srv6
+    message VxlanHubAndSpokeParms {
+        string hub_node_name = 1;
+        uint32 vni = 2;
+        string loopback_ipam_pool_name = 3;
+        string outgoing_interface_label = 4; // needed for static routes of loopback to outgoing i/f
+                                             // all ethernet labels matching will have a static route
+                                             // if this outgoing_interface_label is not provided then
+                                             // static routes will only be created on the first gige
+    }
+    VxlanHubAndSpokeParms vxlan_hub_and_spoke_parms = 8;
+    message VxlanMeshParms {
+        uint32 vni_range_start = 1;
+        uint32 vni_range_end = 2;
+        string loopback_ipam_pool_name = 3;
+        string outgoing_interface_label = 4; // needed for static routes of loopback to outgoing i/f
+                                             // all ethernet labels matching will have a static route
+                                             // if this outgoing_interface_label is not provided then
+                                             // static routes will only be created on the first gige
+    }
+    VxlanMeshParms vxlan_mesh_parms = 9;
+}
+
+message NodeState {
+    string name = 1;
+    string oper_status = 2; // unknown|up|down
+    repeated string msg = 4;
+    repeated RenderedVppAgentEntry rendered_vpp_agent_entries = 5;
+}
+
+message VNFServiceState {
+    string name = 1;
+    string oper_status = 2; // unknown|up|down
+    repeated string msg = 3;
+    repeated RenderedVppAgentEntry rendered_vpp_agent_entries = 4;
+}
+
+message InterfaceState {
+    string vnf = 1;
+    string interface = 2;
+    string oper_status = 3; // unknown|up|down
+    repeated string msg = 4;
+    string mac_address = 5;
+    string mate_mac_address = 6;
+    repeated string ip_addresses = 7;
+    uint32 memifID  = 8;
+    uint32 vrfID = 9;
+    string node = 10;
+}
+
