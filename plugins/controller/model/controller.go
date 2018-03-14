@@ -52,9 +52,9 @@ const (
 	VNFServiceOperStatusUp = "OperUp"
 	VNFServiceOperStatusDown = "OperDown"
 
-	NodeOverlayTypeMesh = "mesh"
-	NodeOverlayTypeHubAndSpoke = "hub_and_spoke"
-	NodeOverlayConnectionTypeVxlan = "vxlan"
+	VNFServiceMeshTypeMesh = "mesh"
+	VNFServiceMeshTypeHubAndSpoke = "hub_and_spoke"
+	VNFServiceMeshConnectionTypeVxlan = "vxlan"
 
 	IPAMPoolScopeSystem = "system"
 	IPAMPoolScopeNode = "node"

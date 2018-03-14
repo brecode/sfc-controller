@@ -1,5 +1,5 @@
 sfc_controller_config_version: 2
-description: 3 node with 1 nic port, host-host vxlan overlay, vnf on each node
+description: 3 node with 1 nic port, host-host vxlan mesh, vnf on each node
 
 system_parameters:
   ipam_pools:
@@ -76,7 +76,7 @@ vnf_services:
             if_type: memif
     connections:
       - conn_type: l2mp
-        node_overlay: router-a-hub-and-spoke
+        vnf_service_mesh: router-a-hub-and-spoke
         interfaces:
           - vnf: vnf1
             interface: port1
@@ -85,9 +85,9 @@ vnf_services:
           - vnf: vnf3
             interface: port1                    
 
-node_overlays:
+vnf_service_meshes:
   - name: router-a-hub-and-spoke
-    node_overlay_type: hub_and_spoke
+    service_mesh_type: hub_and_spoke
     connection_type: vxlan
     vxlan_hub_and_spoke_parms:
       hub_node_name: router-a

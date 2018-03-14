@@ -60,9 +60,9 @@ func (s *Plugin) VNFServiceWriteToDatastore(vs *controller.VNFService) error {
 	return s.writeToDatastore(key, vs)
 }
 
-// NodeOverlayWriteToDatastore writes the specified entity in the sfc db in etcd
-func (s *Plugin) NodeOverlayWriteToDatastore(no *controller.NodeOverlay) error {
-	key := controller.NodeOverlayNameKey(no.Name)
+// VNFServiceMeshWriteToDatastore writes the specified entity in the sfc db in etcd
+func (s *Plugin) VNFServiceMeshWriteToDatastore(no *controller.VNFServiceMesh) error {
+	key := controller.VNFServiceMeshNameKey(no.Name)
 	return s.writeToDatastore(key, no)
 }
 
@@ -108,7 +108,7 @@ func (s *Plugin) LoadSfcConfigIntoRAMCache() error {
 	if err := s.LoadAllVNFServicesFromDatastore(s.ramConfigCache.VNFServices); err != nil {
 		return err
 	}
-	if err := s.LoadAllNodeOverlaysFromDatastore(s.ramConfigCache.NodeOverlays); err != nil {
+	if err := s.LoadAllVNFServiceMeshesFromDatastore(s.ramConfigCache.VNFServiceMeshes); err != nil {
 		return err
 	}
 	if err := s.LoadAllIPAMPoolsFromDatastore(s.ramConfigCache.IPAMPools); err != nil {
@@ -187,15 +187,15 @@ func (s *Plugin) LoadVNFToNodeMapFromDatastore(v2nMap map[string]controller.VNFT
 		})
 }
 
-// LoadAllNodeOverlaysFromDatastore iterates over the etcd set
-func (s *Plugin) LoadAllNodeOverlaysFromDatastore(nodesOverlays map[string]controller.NodeOverlay) error {
-	log.Debugf("LoadAllNodeOverlaysFromDatastore: ...")
-	no := &controller.NodeOverlay{}
-	return s.readIterate(controller.NodeOverlayPrefix(),
-		func() proto.Message { return no },
+// LoadAllVNFServiceMeshesFromDatastore iterates over the etcd set
+func (s *Plugin) LoadAllVNFServiceMeshesFromDatastore(vnfServiceMeshes map[string]controller.VNFServiceMesh) error {
+	log.Debugf("LoadAllVNFServiceMeshesFromDatastore: ...")
+	vsm := &controller.VNFServiceMesh{}
+	return s.readIterate(controller.VNFServiceMeshPrefix(),
+		func() proto.Message { return vsm },
 		func(data proto.Message) {
-			nodesOverlays[no.Name] = *no
-			log.Debugf("LoadAllNodeOverlaysFromDatastore: no=%v", no)
+			vnfServiceMeshes[vsm.Name] = *vsm
+			log.Debugf("LoadAllVNFServiceMeshesFromDatastore: vsm=%v", vsm)
 		})
 }
 

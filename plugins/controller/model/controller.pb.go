@@ -23,7 +23,7 @@ It has these top-level messages:
 	Connection
 	Node
 	VNFService
-	NodeOverlay
+	VNFServiceMesh
 	NodeState
 	VNFServiceState
 	InterfaceState
@@ -215,10 +215,10 @@ func (m *VNF) GetL2Bds() []*L2BD {
 }
 
 type Connection struct {
-	ConnType    string                  `protobuf:"bytes,1,opt,name=conn_type,proto3" json:"conn_type,omitempty"`
-	NodeOverlay string                  `protobuf:"bytes,2,opt,name=node_overlay,proto3" json:"node_overlay,omitempty"`
-	Interfaces  []*Connection_Interface `protobuf:"bytes,3,rep,name=interfaces" json:"interfaces,omitempty"`
-	UseNodeL2Bd string                  `protobuf:"bytes,4,opt,name=use_node_l2bd,proto3" json:"use_node_l2bd,omitempty"`
+	ConnType       string                  `protobuf:"bytes,1,opt,name=conn_type,proto3" json:"conn_type,omitempty"`
+	VnfServiceMesh string                  `protobuf:"bytes,2,opt,name=vnf_service_mesh,proto3" json:"vnf_service_mesh,omitempty"`
+	Interfaces     []*Connection_Interface `protobuf:"bytes,3,rep,name=interfaces" json:"interfaces,omitempty"`
+	UseNodeL2Bd    string                  `protobuf:"bytes,4,opt,name=use_node_l2bd,proto3" json:"use_node_l2bd,omitempty"`
 	// only for l2mp connections
 	L2Bd *L2BD `protobuf:"bytes,5,opt,name=l2bd" json:"l2bd,omitempty"`
 }
@@ -325,53 +325,53 @@ func (m *VNFService) GetConnections() []*Connection {
 	return nil
 }
 
-type NodeOverlay struct {
-	Name                  string                             `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
-	NodeOverlayType       string                             `protobuf:"bytes,2,opt,name=node_overlay_type,proto3" json:"node_overlay_type,omitempty"`
-	ConnectionType        string                             `protobuf:"bytes,3,opt,name=connection_type,proto3" json:"connection_type,omitempty"`
-	VxlanHubAndSpokeParms *NodeOverlay_VxlanHubAndSpokeParms `protobuf:"bytes,8,opt,name=vxlan_hub_and_spoke_parms" json:"vxlan_hub_and_spoke_parms,omitempty"`
-	VxlanMeshParms        *NodeOverlay_VxlanMeshParms        `protobuf:"bytes,9,opt,name=vxlan_mesh_parms" json:"vxlan_mesh_parms,omitempty"`
+type VNFServiceMesh struct {
+	Name                  string                                `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	ServiceMeshType       string                                `protobuf:"bytes,2,opt,name=service_mesh_type,proto3" json:"service_mesh_type,omitempty"`
+	ConnectionType        string                                `protobuf:"bytes,3,opt,name=connection_type,proto3" json:"connection_type,omitempty"`
+	VxlanHubAndSpokeParms *VNFServiceMesh_VxlanHubAndSpokeParms `protobuf:"bytes,8,opt,name=vxlan_hub_and_spoke_parms" json:"vxlan_hub_and_spoke_parms,omitempty"`
+	VxlanMeshParms        *VNFServiceMesh_VxlanMeshParms        `protobuf:"bytes,9,opt,name=vxlan_mesh_parms" json:"vxlan_mesh_parms,omitempty"`
 }
 
-func (m *NodeOverlay) Reset()         { *m = NodeOverlay{} }
-func (m *NodeOverlay) String() string { return proto.CompactTextString(m) }
-func (*NodeOverlay) ProtoMessage()    {}
+func (m *VNFServiceMesh) Reset()         { *m = VNFServiceMesh{} }
+func (m *VNFServiceMesh) String() string { return proto.CompactTextString(m) }
+func (*VNFServiceMesh) ProtoMessage()    {}
 
-func (m *NodeOverlay) GetVxlanHubAndSpokeParms() *NodeOverlay_VxlanHubAndSpokeParms {
+func (m *VNFServiceMesh) GetVxlanHubAndSpokeParms() *VNFServiceMesh_VxlanHubAndSpokeParms {
 	if m != nil {
 		return m.VxlanHubAndSpokeParms
 	}
 	return nil
 }
 
-func (m *NodeOverlay) GetVxlanMeshParms() *NodeOverlay_VxlanMeshParms {
+func (m *VNFServiceMesh) GetVxlanMeshParms() *VNFServiceMesh_VxlanMeshParms {
 	if m != nil {
 		return m.VxlanMeshParms
 	}
 	return nil
 }
 
-type NodeOverlay_VxlanHubAndSpokeParms struct {
+type VNFServiceMesh_VxlanHubAndSpokeParms struct {
 	HubNodeName            string `protobuf:"bytes,1,opt,name=hub_node_name,proto3" json:"hub_node_name,omitempty"`
 	Vni                    uint32 `protobuf:"varint,2,opt,name=vni,proto3" json:"vni,omitempty"`
 	LoopbackIpamPoolName   string `protobuf:"bytes,3,opt,name=loopback_ipam_pool_name,proto3" json:"loopback_ipam_pool_name,omitempty"`
 	OutgoingInterfaceLabel string `protobuf:"bytes,4,opt,name=outgoing_interface_label,proto3" json:"outgoing_interface_label,omitempty"`
 }
 
-func (m *NodeOverlay_VxlanHubAndSpokeParms) Reset()         { *m = NodeOverlay_VxlanHubAndSpokeParms{} }
-func (m *NodeOverlay_VxlanHubAndSpokeParms) String() string { return proto.CompactTextString(m) }
-func (*NodeOverlay_VxlanHubAndSpokeParms) ProtoMessage()    {}
+func (m *VNFServiceMesh_VxlanHubAndSpokeParms) Reset()         { *m = VNFServiceMesh_VxlanHubAndSpokeParms{} }
+func (m *VNFServiceMesh_VxlanHubAndSpokeParms) String() string { return proto.CompactTextString(m) }
+func (*VNFServiceMesh_VxlanHubAndSpokeParms) ProtoMessage()    {}
 
-type NodeOverlay_VxlanMeshParms struct {
+type VNFServiceMesh_VxlanMeshParms struct {
 	VniRangeStart          uint32 `protobuf:"varint,1,opt,name=vni_range_start,proto3" json:"vni_range_start,omitempty"`
 	VniRangeEnd            uint32 `protobuf:"varint,2,opt,name=vni_range_end,proto3" json:"vni_range_end,omitempty"`
 	LoopbackIpamPoolName   string `protobuf:"bytes,3,opt,name=loopback_ipam_pool_name,proto3" json:"loopback_ipam_pool_name,omitempty"`
 	OutgoingInterfaceLabel string `protobuf:"bytes,4,opt,name=outgoing_interface_label,proto3" json:"outgoing_interface_label,omitempty"`
 }
 
-func (m *NodeOverlay_VxlanMeshParms) Reset()         { *m = NodeOverlay_VxlanMeshParms{} }
-func (m *NodeOverlay_VxlanMeshParms) String() string { return proto.CompactTextString(m) }
-func (*NodeOverlay_VxlanMeshParms) ProtoMessage()    {}
+func (m *VNFServiceMesh_VxlanMeshParms) Reset()         { *m = VNFServiceMesh_VxlanMeshParms{} }
+func (m *VNFServiceMesh_VxlanMeshParms) String() string { return proto.CompactTextString(m) }
+func (*VNFServiceMesh_VxlanMeshParms) ProtoMessage()    {}
 
 type NodeState struct {
 	Name                    string                   `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`

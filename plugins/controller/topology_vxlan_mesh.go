@@ -27,7 +27,7 @@ func (s *Plugin) renderToplogyVxlanMesh(vs *controller.VNFService,
 	conn *controller.Connection,
 	connIndex uint32,
 	vnfInterfaces []*controller.Interface,
-	nodeOverlay *controller.NodeOverlay,
+	VNFServiceMesh *controller.VNFServiceMesh,
 	v2n []controller.VNFToNodeMap,
 	vnfTypes []string,
 	nodeMap map[string]bool,
@@ -40,21 +40,21 @@ func (s *Plugin) renderToplogyVxlanMesh(vs *controller.VNFService,
 	// below is also associated with this bridge.
 
 	// create the vxlan endpoints
-	vniAllocator, exists := s.ramConfigCache.NodeOverlayVniAllocators[nodeOverlay.Name]
+	vniAllocator, exists := s.ramConfigCache.VNFServiceMeshVniAllocators[VNFServiceMesh.Name]
 	if !exists {
-		msg := fmt.Sprintf("vnf-service: %s, conn: %d, overlay: %s out of vni's",
+		msg := fmt.Sprintf("vnf-service: %s, conn: %d, service mesh: %s out of vni's",
 			vs.Name,
 			connIndex,
-			nodeOverlay.Name)
+			VNFServiceMesh.Name)
 		s.AppendStatusMsgToVnfService(msg, vsState)
 		return fmt.Errorf(msg)
 	}
 	vni, err := vniAllocator.AllocateVni()
 	if err != nil {
-		msg := fmt.Sprintf("vnf-service: %s, conn: %d, overlay: %s out of vni's",
+		msg := fmt.Sprintf("vnf-service: %s, conn: %d, service mesh: %s out of vni's",
 			vs.Name,
 			connIndex,
-			nodeOverlay.Name)
+			VNFServiceMesh.Name)
 		s.AppendStatusMsgToVnfService(msg, vsState)
 		return fmt.Errorf(msg)
 	}
@@ -69,23 +69,23 @@ func (s *Plugin) renderToplogyVxlanMesh(vs *controller.VNFService,
 			ifName := fmt.Sprintf("IF_VXLAN_MESH_FROM_%s_TO_%s_VSRVC_%s_CONN_%d_VNI_%d",
 				fromNode, toNode, vs.Name, connIndex, vni)
 
-			vxlanIPFromAddress, err := s.NodeOverlayAllocateVxlanAddress(
-				nodeOverlay.VxlanMeshParms.LoopbackIpamPoolName, fromNode)
+			vxlanIPFromAddress, err := s.VNFServiceMeshAllocateVxlanAddress(
+				VNFServiceMesh.VxlanMeshParms.LoopbackIpamPoolName, fromNode)
 			if err != nil {
-				msg := fmt.Sprintf("vnf-service: %s, conn: %d, overlay: %s %s",
+				msg := fmt.Sprintf("vnf-service: %s, conn: %d, service mesh: %s %s",
 					vs.Name,
 					connIndex,
-					nodeOverlay.Name, err)
+					VNFServiceMesh.Name, err)
 				s.AppendStatusMsgToVnfService(msg, vsState)
 				return fmt.Errorf(msg)
 			}
-			vxlanIPToAddress, err := s.NodeOverlayAllocateVxlanAddress(
-				nodeOverlay.VxlanMeshParms.LoopbackIpamPoolName, toNode)
+			vxlanIPToAddress, err := s.VNFServiceMeshAllocateVxlanAddress(
+				VNFServiceMesh.VxlanMeshParms.LoopbackIpamPoolName, toNode)
 			if err != nil {
-				msg := fmt.Sprintf("vnf-service: %s, conn: %d, overlay: %s %s",
+				msg := fmt.Sprintf("vnf-service: %s, conn: %d, service mesh: %s %s",
 					vs.Name,
 					connIndex,
-					nodeOverlay.Name, err)
+					VNFServiceMesh.Name, err)
 				s.AppendStatusMsgToVnfService(msg, vsState)
 				return fmt.Errorf(msg)
 			}
@@ -108,7 +108,7 @@ func (s *Plugin) renderToplogyVxlanMesh(vs *controller.VNFService,
 
 			renderedEntries := s.NodeRenderVxlanStaticRoutes(fromNode, toNode,
 				vxlanIPFromAddress, vxlanIPToAddress,
-				nodeOverlay.VxlanMeshParms.OutgoingInterfaceLabel)
+				VNFServiceMesh.VxlanMeshParms.OutgoingInterfaceLabel)
 
 			vsState.RenderedVppAgentEntries = append(vsState.RenderedVppAgentEntries,
 				renderedEntries...)

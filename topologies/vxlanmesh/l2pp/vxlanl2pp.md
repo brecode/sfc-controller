@@ -35,7 +35,7 @@ sfc-controller -sfc-config=toplogies/vxlanmesh/l2pp/vxlanl2pp.yaml -clean
 The yaml file looks like:
 ```
 sfc_controller_config_version: 2
-description: 3 nodes with 1 nic port, host-host vxlan overlay, vnf on each node
+description: 3 nodes with 1 nic port, host-host vxlan mesh, vnf on each node
 
 system_parameters:
   ipam_pools:
@@ -132,23 +132,23 @@ vnf_services:
                 - port2
     connections:
       - conn_type: l2pp
-        node_overlay: inter_host_vxlan_overlay
+        vnf_service_mesh: inter_host_vxlan_mesh
         interfaces:
           - vnf: vnf1
             interface: port2
           - vnf: vnf2
             interface: port1
       - conn_type: l2pp
-        node_overlay: inter_host_vxlan_overlay
+        vnf_service_mesh: inter_host_vxlan_mesh
         interfaces:
           - vnf: vnf2
             interface: port2
           - vnf: vnf3
-            interface: port1           
+            interface: port1
 
-node_overlays:
-  - name: inter_host_vxlan_overlay
-    node_overlay_type: mesh
+vnf_service_meshs:
+  - name: inter_host_vxlan_mesh
+    service_mesh_type: mesh
     connection_type: vxlan
     vxlan_mesh_parms:
       vni_range_start: 5000
@@ -323,8 +323,8 @@ The etcd /sfc-controller subtree look like:
 
 ```
 
-/sfc-controller/v2/config/node-overlay/inter_host_vxlan_overlay
-{"name":"inter_host_vxlan_overlay","node_overlay_type":"mesh","connection_type":"vxlan","vxlan_mesh_parms":{"vni_range_start":5000,"vni_range_end":5999,"loopback_ipam_pool_name":"vxlan_loopback_pool","outgoing_interface_label":"vxlan"}}
+/sfc-controller/v2/config/vnf-service-mesh/inter_host_vxlan_mesh
+{"name":"inter_host_vxlan_mesh","service_mesh_type":"mesh","connection_type":"vxlan","vxlan_mesh_parms":{"vni_range_start":5000,"vni_range_end":5999,"loopback_ipam_pool_name":"vxlan_loopback_pool","outgoing_interface_label":"vxlan"}}
 /sfc-controller/v2/config/node/vswitch1
 {"name":"vswitch1","node_type":"host","interfaces":[{"name":"gigethernet13/1/1","if_type":"ethernet","ip_addresses":["10.100.1.1/16"],"custom_labels":["vxlan"]},{"name":"gigethernet13/1/2","if_type":"ethernet","ip_addresses":["10.100.1.2/16"],"custom_labels":["vxlan"]}]}
 /sfc-controller/v2/config/node/vswitch2
@@ -334,7 +334,7 @@ The etcd /sfc-controller subtree look like:
 /sfc-controller/v2/config/system-parameters
 {"mtu":1500,"default_static_route_preference":5,"ipam_pools":[{"name":"vxlan_loopback_pool","network":"111.111.111.0/24"}]}
 /sfc-controller/v2/config/vnf-service/service1
-{"name":"service1","vnfs":[{"name":"vnf1","vnf_type":"vppcontainer","interfaces":[{"name":"port1","if_type":"memif"},{"name":"port2","if_type":"memif"}]},{"name":"vnf2","vnf_type":"vppcontainer","interfaces":[{"name":"port1","if_type":"memif"},{"name":"port2","if_type":"memif"}]},{"name":"vnf3","vnf_type":"vppcontainer","interfaces":[{"name":"port1","if_type":"memif"},{"name":"port2","if_type":"memif"}]}],"connections":[{"conn_type":"l2pp","node_overlay":"inter_host_vxlan_overlay","interfaces":[{"vnf":"vnf1","interface":"port2"},{"vnf":"vnf2","interface":"port1"}]},{"conn_type":"l2pp","node_overlay":"inter_host_vxlan_overlay","interfaces":[{"vnf":"vnf2","interface":"port2"},{"vnf":"vnf3","interface":"port1"}]}]}
+{"name":"service1","vnfs":[{"name":"vnf1","vnf_type":"vppcontainer","interfaces":[{"name":"port1","if_type":"memif"},{"name":"port2","if_type":"memif"}]},{"name":"vnf2","vnf_type":"vppcontainer","interfaces":[{"name":"port1","if_type":"memif"},{"name":"port2","if_type":"memif"}]},{"name":"vnf3","vnf_type":"vppcontainer","interfaces":[{"name":"port1","if_type":"memif"},{"name":"port2","if_type":"memif"}]}],"connections":[{"conn_type":"l2pp","vnf_service_mesh":"inter_host_vxlan_mesh","interfaces":[{"vnf":"vnf1","interface":"port2"},{"vnf":"vnf2","interface":"port1"}]},{"conn_type":"l2pp","vnf_service_mesh":"inter_host_vxlan_mesh","interfaces":[{"vnf":"vnf2","interface":"port2"},{"vnf":"vnf3","interface":"port1"}]}]}
 /sfc-controller/v2/config/vnf-to-node/vnf1
 {"vnf":"vnf1","node":"vswitch1"}
 /sfc-controller/v2/config/vnf-to-node/vnf2
@@ -900,8 +900,8 @@ The etcd /sfc-controller subtree look like:
 
 ```
 
-/sfc-controller/v2/config/node-overlay/inter_host_vxlan_overlay
-{"name":"inter_host_vxlan_overlay","node_overlay_type":"mesh","connection_type":"vxlan","vxlan_mesh_parms":{"vni_range_start":5000,"vni_range_end":5999,"loopback_ipam_pool_name":"vxlan_loopback_pool","outgoing_interface_label":"vxlan"}}
+/sfc-controller/v2/config/vnf-service-mesh/inter_host_vxlan_mesh
+{"name":"inter_host_vxlan_mesh","service_mesh_type":"mesh","connection_type":"vxlan","vxlan_mesh_parms":{"vni_range_start":5000,"vni_range_end":5999,"loopback_ipam_pool_name":"vxlan_loopback_pool","outgoing_interface_label":"vxlan"}}
 /sfc-controller/v2/config/node/vswitch1
 {"name":"vswitch1","node_type":"host","interfaces":[{"name":"gigethernet13/1/1","if_type":"ethernet","ip_addresses":["10.100.1.1/16"],"custom_labels":["vxlan"]},{"name":"gigethernet13/1/2","if_type":"ethernet","ip_addresses":["10.100.1.2/16"],"custom_labels":["vxlan"]}]}
 /sfc-controller/v2/config/node/vswitch2
@@ -911,7 +911,7 @@ The etcd /sfc-controller subtree look like:
 /sfc-controller/v2/config/system-parameters
 {"mtu":1500,"default_static_route_preference":5,"ipam_pools":[{"name":"vxlan_loopback_pool","network":"111.111.111.0/24"}]}
 /sfc-controller/v2/config/vnf-service/service1
-{"name":"service1","vnfs":[{"name":"vnf1","vnf_type":"vppcontainer","interfaces":[{"name":"port1","if_type":"memif"},{"name":"port2","if_type":"memif"}]},{"name":"vnf2","vnf_type":"vppcontainer","interfaces":[{"name":"port1","if_type":"memif"},{"name":"port2","if_type":"memif"}]},{"name":"vnf3","vnf_type":"vppcontainer","interfaces":[{"name":"port1","if_type":"memif"},{"name":"port2","if_type":"memif"}]}],"connections":[{"conn_type":"l2pp","node_overlay":"inter_host_vxlan_overlay","interfaces":[{"vnf":"vnf1","interface":"port2"},{"vnf":"vnf2","interface":"port1"}]},{"conn_type":"l2pp","node_overlay":"inter_host_vxlan_overlay","interfaces":[{"vnf":"vnf2","interface":"port2"},{"vnf":"vnf3","interface":"port1"}]}]}
+{"name":"service1","vnfs":[{"name":"vnf1","vnf_type":"vppcontainer","interfaces":[{"name":"port1","if_type":"memif"},{"name":"port2","if_type":"memif"}]},{"name":"vnf2","vnf_type":"vppcontainer","interfaces":[{"name":"port1","if_type":"memif"},{"name":"port2","if_type":"memif"}]},{"name":"vnf3","vnf_type":"vppcontainer","interfaces":[{"name":"port1","if_type":"memif"},{"name":"port2","if_type":"memif"}]}],"connections":[{"conn_type":"l2pp","vnf_service_mesh":"inter_host_vxlan_mesh","interfaces":[{"vnf":"vnf1","interface":"port2"},{"vnf":"vnf2","interface":"port1"}]},{"conn_type":"l2pp","vnf_service_mesh":"inter_host_vxlan_mesh","interfaces":[{"vnf":"vnf2","interface":"port2"},{"vnf":"vnf3","interface":"port1"}]}]}
 /sfc-controller/v2/config/vnf-to-node/vnf1
 {"vnf":"vnf1","node":"vswitch1"}
 /sfc-controller/v2/config/vnf-to-node/vnf2
@@ -1049,8 +1049,8 @@ The etcd /sfc-controller subtree look like:
 
 ```
 
-/sfc-controller/v2/config/node-overlay/inter_host_vxlan_overlay
-{"name":"inter_host_vxlan_overlay","node_overlay_type":"mesh","connection_type":"vxlan","vxlan_mesh_parms":{"vni_range_start":5000,"vni_range_end":5999,"loopback_ipam_pool_name":"vxlan_loopback_pool","outgoing_interface_label":"vxlan"}}
+/sfc-controller/v2/config/vnf-service-mesh/inter_host_vxlan_mesh
+{"name":"inter_host_vxlan_mesh","service_mesh_type":"mesh","connection_type":"vxlan","vxlan_mesh_parms":{"vni_range_start":5000,"vni_range_end":5999,"loopback_ipam_pool_name":"vxlan_loopback_pool","outgoing_interface_label":"vxlan"}}
 /sfc-controller/v2/config/node/vswitch1
 {"name":"vswitch1","node_type":"host","interfaces":[{"name":"gigethernet13/1/1","if_type":"ethernet","ip_addresses":["10.100.1.1/16"],"custom_labels":["vxlan"]},{"name":"gigethernet13/1/2","if_type":"ethernet","ip_addresses":["10.100.1.2/16"],"custom_labels":["vxlan"]}]}
 /sfc-controller/v2/config/node/vswitch2
@@ -1060,7 +1060,7 @@ The etcd /sfc-controller subtree look like:
 /sfc-controller/v2/config/system-parameters
 {"mtu":1500,"default_static_route_preference":5,"ipam_pools":[{"name":"vxlan_loopback_pool","network":"111.111.111.0/24"}]}
 /sfc-controller/v2/config/vnf-service/service1
-{"name":"service1","vnfs":[{"name":"vnf1","vnf_type":"vppcontainer","interfaces":[{"name":"port1","if_type":"memif"},{"name":"port2","if_type":"memif"}]},{"name":"vnf2","vnf_type":"vppcontainer","interfaces":[{"name":"port1","if_type":"memif"},{"name":"port2","if_type":"memif"}]},{"name":"vnf3","vnf_type":"vppcontainer","interfaces":[{"name":"port1","if_type":"memif"},{"name":"port2","if_type":"memif"}]}],"connections":[{"conn_type":"l2pp","node_overlay":"inter_host_vxlan_overlay","interfaces":[{"vnf":"vnf1","interface":"port2"},{"vnf":"vnf2","interface":"port1"}]},{"conn_type":"l2pp","node_overlay":"inter_host_vxlan_overlay","interfaces":[{"vnf":"vnf2","interface":"port2"},{"vnf":"vnf3","interface":"port1"}]}]}
+{"name":"service1","vnfs":[{"name":"vnf1","vnf_type":"vppcontainer","interfaces":[{"name":"port1","if_type":"memif"},{"name":"port2","if_type":"memif"}]},{"name":"vnf2","vnf_type":"vppcontainer","interfaces":[{"name":"port1","if_type":"memif"},{"name":"port2","if_type":"memif"}]},{"name":"vnf3","vnf_type":"vppcontainer","interfaces":[{"name":"port1","if_type":"memif"},{"name":"port2","if_type":"memif"}]}],"connections":[{"conn_type":"l2pp","vnf_service_mesh":"inter_host_vxlan_mesh","interfaces":[{"vnf":"vnf1","interface":"port2"},{"vnf":"vnf2","interface":"port1"}]},{"conn_type":"l2pp","vnf_service_mesh":"inter_host_vxlan_mesh","interfaces":[{"vnf":"vnf2","interface":"port2"},{"vnf":"vnf3","interface":"port1"}]}]}
 /sfc-controller/v2/config/vnf-to-node/vnf1
 {"vnf":"vnf1"}
 /sfc-controller/v2/config/vnf-to-node/vnf2

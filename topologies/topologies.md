@@ -2,8 +2,8 @@
 
 Please note that the content of this page is currently **WORK IN PROGRESS**.
 
-The controller is capable of supporting various inter-node overlay types,
-interface types, and connectivity options.  Examples of overlay types are:
+The controller is capable of supporting various inter-node mesh types,
+interface types, and connectivity options.  Examples of mesh types are:
 vxlan mesh, srv6, ipv4, ipv6, dot1q vlans, ipsec.  Interface types such as
 memif, veth, and tap, and connectivity options are l2pp and l2mp.
 
@@ -30,5 +30,5 @@ where the vnfs are placed on separate hosts.
 
 See [here](vxlanhubandspoke/l2mp/vxlanl2mp.md) for an example of a layer 2 service
 where an external router is used as the hub of a hub and spoke vxlan tunnel
-overlay where 2 of teh VNFs are on one host, and another is on a difernt host.
+mesh where 2 of teh VNFs are on one host, and another is on a difernt host.
 There are two vxlan tunnels from the hub to the hosts.

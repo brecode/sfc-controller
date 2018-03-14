@@ -75,9 +75,9 @@ func (s *Plugin) RenderTopologyL2PP(vs *controller.VNFService,
 			vnfInterfaces, vnfTypes, vsState)
 	}
 
-	// not on same node so ensure there is an nodeOverlay sepcified
-	if conn.NodeOverlay == "" {
-		msg := fmt.Sprintf("vnf-service: %s, %s/%s to %s/%s no node overlay specified",
+	// not on same node so ensure there is an VNFServiceMesh sepcified
+	if conn.VnfServiceMesh == "" {
+		msg := fmt.Sprintf("vnf-service: %s, %s/%s to %s/%s no node service mesh specified",
 			vs.Name,
 			conn.Interfaces[0].Vnf, conn.Interfaces[0].Interface,
 			conn.Interfaces[1].Vnf, conn.Interfaces[1].Interface)
@@ -85,10 +85,10 @@ func (s *Plugin) RenderTopologyL2PP(vs *controller.VNFService,
 		return fmt.Errorf(msg)
 	}
 
-	// look up the node overlay
-	nodeOverlay, exists := s.ramConfigCache.NodeOverlays[conn.NodeOverlay]
+	// look up the vnf service mesh
+	vnfServiceMesh, exists := s.ramConfigCache.VNFServiceMeshes[conn.VnfServiceMesh]
 	if !exists {
-		msg := fmt.Sprintf("vnf-service: %s, %s/%s to %s/%s referencing a missing node overlay",
+		msg := fmt.Sprintf("vnf-service: %s, %s/%s to %s/%s referencing a missing vnf service mesh",
 			vs.Name,
 			conn.Interfaces[0].Vnf, conn.Interfaces[0].Interface,
 			conn.Interfaces[1].Vnf, conn.Interfaces[1].Interface)
@@ -98,7 +98,7 @@ func (s *Plugin) RenderTopologyL2PP(vs *controller.VNFService,
 
 	// now setup the connection between nodes
 	return s.renderToplogySegmentL2PPInterNode(vs, conn, connIndex, vnfInterfaces,
-		&nodeOverlay, v2n, vnfTypes, vsState)
+		&vnfServiceMesh, v2n, vnfTypes, vsState)
 }
 
 // renderToplogySegemtL2PPSameNode renders this L2PP connection on same node
@@ -166,7 +166,7 @@ func (s *Plugin) renderToplogySegmentL2PPInterNode(vs *controller.VNFService,
 	conn *controller.Connection,
 	connIndex uint32,
 	vnfInterfaces []*controller.Interface,
-	nodeOverlay *controller.NodeOverlay,
+	vnfServiceMesh *controller.VNFServiceMesh,
 	v2n [2]controller.VNFToNodeMap,
 	vnfTypes []string,
 	vsState *controller.VNFServiceState) error {
@@ -185,38 +185,38 @@ func (s *Plugin) renderToplogySegmentL2PPInterNode(vs *controller.VNFService,
 	}
 
 	// hack for now ... only inter-node tunnel supported
-	if nodeOverlay.NodeOverlayType != controller.NodeOverlayTypeMesh &&
-		nodeOverlay.ConnectionType != controller.NodeOverlayConnectionTypeVxlan {
-		msg := fmt.Sprintf("vnf-service: %s, conn: %d, %s/%s to %s/%s overlay: %s type not implemented",
+	if vnfServiceMesh.ServiceMeshType != controller.VNFServiceMeshTypeMesh &&
+		vnfServiceMesh.ConnectionType != controller.VNFServiceMeshConnectionTypeVxlan {
+		msg := fmt.Sprintf("vnf-service: %s, conn: %d, %s/%s to %s/%s service mesh: %s type not implemented",
 			vs.Name,
 			connIndex,
 			conn.Interfaces[0].Vnf, conn.Interfaces[0].Interface,
 			conn.Interfaces[1].Vnf, conn.Interfaces[1].Interface,
-			nodeOverlay.Name)
+			vnfServiceMesh.Name)
 		s.AppendStatusMsgToVnfService(msg, vsState)
 		return fmt.Errorf(msg)
 	}
 
 	// create the vxlan endpoints
-	vniAllocator, exists := s.ramConfigCache.NodeOverlayVniAllocators[nodeOverlay.Name]
+	vniAllocator, exists := s.ramConfigCache.VNFServiceMeshVniAllocators[vnfServiceMesh.Name]
 	if !exists {
-		msg := fmt.Sprintf("vnf-service: %s, conn: %d, %s/%s to %s/%s overlay: %s out of vni's",
+		msg := fmt.Sprintf("vnf-service: %s, conn: %d, %s/%s to %s/%s service mesh: %s out of vni's",
 			vs.Name,
 			connIndex,
 			conn.Interfaces[0].Vnf, conn.Interfaces[0].Interface,
 			conn.Interfaces[1].Vnf, conn.Interfaces[1].Interface,
-			nodeOverlay.Name)
+			vnfServiceMesh.Name)
 		s.AppendStatusMsgToVnfService(msg, vsState)
 		return fmt.Errorf(msg)
 	}
 	vni, err := vniAllocator.AllocateVni()
 	if err != nil {
-		msg := fmt.Sprintf("vnf-service: %s, conn: %d, %s/%s to %s/%s overlay: %s out of vni's",
+		msg := fmt.Sprintf("vnf-service: %s, conn: %d, %s/%s to %s/%s service mesh: %s out of vni's",
 			vs.Name,
 			connIndex,
 			conn.Interfaces[0].Vnf, conn.Interfaces[0].Interface,
 			conn.Interfaces[1].Vnf, conn.Interfaces[1].Interface,
-			nodeOverlay.Name)
+			vnfServiceMesh.Name)
 		s.AppendStatusMsgToVnfService(msg, vsState)
 		return fmt.Errorf(msg)
 	}
@@ -232,27 +232,27 @@ func (s *Plugin) renderToplogySegmentL2PPInterNode(vs *controller.VNFService,
 
 		xconn[1][i] = ifName
 
-		vxlanIPFromAddress, err := s.NodeOverlayAllocateVxlanAddress(
-			nodeOverlay.VxlanMeshParms.LoopbackIpamPoolName, v2n[i].Node)
+		vxlanIPFromAddress, err := s.VNFServiceMeshAllocateVxlanAddress(
+			vnfServiceMesh.VxlanMeshParms.LoopbackIpamPoolName, v2n[i].Node)
 		if err != nil {
-			msg := fmt.Sprintf("vnf-service: %s, conn: %d, %s/%s to %s/%s overlay: %s, %s",
+			msg := fmt.Sprintf("vnf-service: %s, conn: %d, %s/%s to %s/%s service mesh: %s, %s",
 				vs.Name,
 				connIndex,
 				conn.Interfaces[0].Vnf, conn.Interfaces[0].Interface,
 				conn.Interfaces[1].Vnf, conn.Interfaces[1].Interface,
-				nodeOverlay.Name, err)
+				vnfServiceMesh.Name, err)
 			s.AppendStatusMsgToVnfService(msg, vsState)
 			return fmt.Errorf(msg)
 		}
-		vxlanIPToAddress, err := s.NodeOverlayAllocateVxlanAddress(
-			nodeOverlay.VxlanMeshParms.LoopbackIpamPoolName, v2n[^i&1].Node)
+		vxlanIPToAddress, err := s.VNFServiceMeshAllocateVxlanAddress(
+			vnfServiceMesh.VxlanMeshParms.LoopbackIpamPoolName, v2n[^i&1].Node)
 		if err != nil {
-			msg := fmt.Sprintf("vnf-service: %s, conn: %d, %s/%s to %s/%s overlay: %s %s",
+			msg := fmt.Sprintf("vnf-service: %s, conn: %d, %s/%s to %s/%s service mesh: %s %s",
 				vs.Name,
 				connIndex,
 				conn.Interfaces[0].Vnf, conn.Interfaces[0].Interface,
 				conn.Interfaces[1].Vnf, conn.Interfaces[1].Interface,
-				nodeOverlay.Name, err)
+				vnfServiceMesh.Name, err)
 			s.AppendStatusMsgToVnfService(msg, vsState)
 			return fmt.Errorf(msg)
 		}
@@ -268,7 +268,7 @@ func (s *Plugin) renderToplogySegmentL2PPInterNode(vs *controller.VNFService,
 
 		renderedEntries := s.NodeRenderVxlanStaticRoutes(v2n[i].Node, v2n[^i&1].Node,
 			vxlanIPFromAddress, vxlanIPToAddress,
-			nodeOverlay.VxlanMeshParms.OutgoingInterfaceLabel)
+			vnfServiceMesh.VxlanMeshParms.OutgoingInterfaceLabel)
 
 		vsState.RenderedVppAgentEntries = append(vsState.RenderedVppAgentEntries,
 			renderedEntries...)

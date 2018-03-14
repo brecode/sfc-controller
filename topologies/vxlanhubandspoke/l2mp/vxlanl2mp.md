@@ -98,7 +98,7 @@ vnf_services:
             if_type: memif
     connections:
       - conn_type: l2mp
-        node_overlay: router-a-hub-and-spoke
+        vnf_service_mesh: router-a-hub-and-spoke
         interfaces:
           - vnf: vnf1
             interface: port1
@@ -107,9 +107,9 @@ vnf_services:
           - vnf: vnf3
             interface: port1
 
-node_overlays:
+vnf_service_meshes:
   - name: router-a-hub-and-spoke
-    node_overlay_type: hub_and_spoke
+    service_mesh_type: hub_and_spoke
     connection_type: vxlan
     vxlan_hub_and_spoke_parms:
       hub_node_name: router-a
@@ -468,8 +468,8 @@ The etcd /sfc-controller subtree look like:
 
 ```
 
-/sfc-controller/v2/config/node-overlay/router-a-hub-and-spoke
-{"name":"router-a-hub-and-spoke","node_overlay_type":"hub_and_spoke","connection_type":"vxlan","vxlan_hub_and_spoke_parms":{"hub_node_name":"router-a","vni":6000,"loopback_ipam_pool_name":"vxlan_loopback_pool","outgoing_interface_label":"vxlan"}}
+/sfc-controller/v2/config/vnf-service-mesh/router-a-hub-and-spoke
+{"name":"router-a-hub-and-spoke","service_mesh_type":"hub_and_spoke","connection_type":"vxlan","vxlan_hub_and_spoke_parms":{"hub_node_name":"router-a","vni":6000,"loopback_ipam_pool_name":"vxlan_loopback_pool","outgoing_interface_label":"vxlan"}}
 /sfc-controller/v2/config/node/router-a
 {"name":"router-a","node_type":"external","interfaces":[{"name":"gigethernet13/0/a","if_type":"ethernet","ip_addresses":["10.100.4.4/24"],"custom_labels":["vxlan"]}]}
 /sfc-controller/v2/config/node/vswitch1
@@ -481,7 +481,7 @@ The etcd /sfc-controller subtree look like:
 /sfc-controller/v2/config/system-parameters
 {"mtu":1500,"default_static_route_preference":5,"ipam_pools":[{"name":"vxlan_loopback_pool","network":"111.111.111.0/24"}]}
 /sfc-controller/v2/config/vnf-service/service1
-{"name":"service1","vnfs":[{"name":"vnf1","vnf_type":"vppcontainer","interfaces":[{"name":"port1","if_type":"memif"}]},{"name":"vnf2","vnf_type":"vppcontainer","interfaces":[{"name":"port1","if_type":"memif"}]},{"name":"vnf3","vnf_type":"vppcontainer","interfaces":[{"name":"port1","if_type":"memif"}]}],"connections":[{"conn_type":"l2mp","node_overlay":"router-a-hub-and-spoke","interfaces":[{"vnf":"vnf1","interface":"port1"},{"vnf":"vnf2","interface":"port1"},{"vnf":"vnf3","interface":"port1"}]}]}
+{"name":"service1","vnfs":[{"name":"vnf1","vnf_type":"vppcontainer","interfaces":[{"name":"port1","if_type":"memif"}]},{"name":"vnf2","vnf_type":"vppcontainer","interfaces":[{"name":"port1","if_type":"memif"}]},{"name":"vnf3","vnf_type":"vppcontainer","interfaces":[{"name":"port1","if_type":"memif"}]}],"connections":[{"conn_type":"l2mp","vnf_service_mesh":"router-a-hub-and-spoke","interfaces":[{"vnf":"vnf1","interface":"port1"},{"vnf":"vnf2","interface":"port1"},{"vnf":"vnf3","interface":"port1"}]}]}
 /sfc-controller/v2/config/vnf-to-node/vnf1
 {"vnf":"vnf1","node":"vswitch3"}
 /sfc-controller/v2/config/vnf-to-node/vnf2

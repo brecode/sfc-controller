@@ -115,7 +115,7 @@ message VNF {
 
 message Connection {
     string conn_type = 1; // l2pp|l2mp|ip4pp|ip6pp|ip4mp|ip6mp
-    string node_overlay = 2; // needed if require inter-node vnf's
+    string vnf_service_mesh = 2; // needed if require inter-node vnf's
     message Interface {
         string vnf = 1;
         string interface = 2;
@@ -147,9 +147,9 @@ message VNFService {
     repeated Connection connections = 4;
 }
 
-message NodeOverlay {
+message VNFServiceMesh {
     string name = 1;
-    string node_overlay_type = 2; // hubandspoke|mesh
+    string service_mesh_type = 2; // hubandspoke|mesh
     string connection_type = 3;   //vxlan|dot1q|srv6
     message VxlanHubAndSpokeParms {
         string hub_node_name = 1;

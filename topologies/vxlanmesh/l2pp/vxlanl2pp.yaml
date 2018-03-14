@@ -1,5 +1,5 @@
 sfc_controller_config_version: 2
-description: 3 nodes with 1 nic port, host-host vxlan overlay, vnf on each node
+description: 3 nodes with 1 nic port, host-host vxlan mesh, vnf on each node
 
 system_parameters:
   ipam_pools:
@@ -96,23 +96,23 @@ vnf_services:
                 - port2
     connections:
       - conn_type: l2pp
-        node_overlay: inter_host_vxlan_overlay
+        vnf_service_mesh: inter_host_vxlan_mesh
         interfaces:
           - vnf: vnf1
             interface: port2
           - vnf: vnf2
             interface: port1
       - conn_type: l2pp
-        node_overlay: inter_host_vxlan_overlay
+        vnf_service_mesh: inter_host_vxlan_mesh
         interfaces:
           - vnf: vnf2
             interface: port2
           - vnf: vnf3
             interface: port1           
 
-node_overlays:
-  - name: inter_host_vxlan_overlay
-    node_overlay_type: mesh
+vnf_service_meshes:
+  - name: inter_host_vxlan_mesh
+    service_mesh_type: mesh
     connection_type: vxlan
     vxlan_mesh_parms:
       vni_range_start: 5000

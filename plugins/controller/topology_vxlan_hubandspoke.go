@@ -27,7 +27,7 @@ func (s *Plugin) renderToplogyVxlanHubAndSpoke(vs *controller.VNFService,
 	conn *controller.Connection,
 	connIndex uint32,
 	vnfInterfaces []*controller.Interface,
-	nodeOverlay *controller.NodeOverlay,
+	VNFServiceMesh *controller.VNFServiceMesh,
 	v2n []controller.VNFToNodeMap,
 	vnfTypes []string,
 	spokeNodeMap map[string]bool,
@@ -35,33 +35,33 @@ func (s *Plugin) renderToplogyVxlanHubAndSpoke(vs *controller.VNFService,
 	vsState *controller.VNFServiceState) error {
 
 	// The spokeNodeMap contains the set of nodes involved in the l2mp connection.  The node
-	// in the node overlay is the hub and this set of nodes in the nodeMap are the spokes.
+	// in the node service mesh is the hub and this set of nodes in the nodeMap are the spokes.
 	// Need to create an l2bd on the hub node and add each of the vxlan tunnels to it, also
 	// need to create an l2bd on each of the spoke nodes and add the vxlan spoke to it.
 	// Note that the l2bdIFs map passed into this function in the input parameters already
 	// has the per spoke vnf interfaces in it.
 
-	hubNodeName := nodeOverlay.VxlanHubAndSpokeParms.HubNodeName
+	hubNodeName := VNFServiceMesh.VxlanHubAndSpokeParms.HubNodeName
 	if _, exists := s.ramConfigCache.Nodes[hubNodeName]; !exists {
-		msg := fmt.Sprintf("vnf-service: %s, conn: %d, overlay: %s, hub_node: %s not found",
+		msg := fmt.Sprintf("vnf-service: %s, conn: %d, service mesh: %s, hub_node: %s not found",
 			vs.Name,
 			connIndex,
-			nodeOverlay.Name,
+			VNFServiceMesh.Name,
 			hubNodeName)
 		s.AppendStatusMsgToVnfService(msg, vsState)
 		return fmt.Errorf(msg)
 	}
 
-	vni := nodeOverlay.VxlanHubAndSpokeParms.Vni
+	vni := VNFServiceMesh.VxlanHubAndSpokeParms.Vni
 
 	// for each spoke, create a hub-spoke and spoke-hub vxlan i/f
 	for spokeNodeName := range spokeNodeMap {
 
 		if hubNodeName == spokeNodeName {
-			msg := fmt.Sprintf("vnf-service: %s, conn: %d, overlay: %s hub node same as spoke %s",
+			msg := fmt.Sprintf("vnf-service: %s, conn: %d, service mesh: %s hub node same as spoke %s",
 				vs.Name,
 				connIndex,
-				nodeOverlay.Name, hubNodeName)
+				VNFServiceMesh.Name, hubNodeName)
 			s.AppendStatusMsgToVnfService(msg, vsState)
 			return fmt.Errorf(msg)
 		}
@@ -82,23 +82,23 @@ func (s *Plugin) renderToplogyVxlanHubAndSpoke(vs *controller.VNFService,
 					fromNode, toNode, vs.Name, connIndex, vni)
 			}
 
-			vxlanIPFromAddress, err := s.NodeOverlayAllocateVxlanAddress(
-				nodeOverlay.VxlanHubAndSpokeParms.LoopbackIpamPoolName, fromNode)
+			vxlanIPFromAddress, err := s.VNFServiceMeshAllocateVxlanAddress(
+				VNFServiceMesh.VxlanHubAndSpokeParms.LoopbackIpamPoolName, fromNode)
 			if err != nil {
-				msg := fmt.Sprintf("vnf-service: %s, conn: %d, overlay: %s %s",
+				msg := fmt.Sprintf("vnf-service: %s, conn: %d, service mesh: %s %s",
 					vs.Name,
 					connIndex,
-					nodeOverlay.Name, err)
+					VNFServiceMesh.Name, err)
 				s.AppendStatusMsgToVnfService(msg, vsState)
 				return fmt.Errorf(msg)
 			}
-			vxlanIPToAddress, err := s.NodeOverlayAllocateVxlanAddress(
-				nodeOverlay.VxlanHubAndSpokeParms.LoopbackIpamPoolName, toNode)
+			vxlanIPToAddress, err := s.VNFServiceMeshAllocateVxlanAddress(
+				VNFServiceMesh.VxlanHubAndSpokeParms.LoopbackIpamPoolName, toNode)
 			if err != nil {
-				msg := fmt.Sprintf("vnf-service: %s, conn: %d, overlay: %s %s",
+				msg := fmt.Sprintf("vnf-service: %s, conn: %d, service mesh: %s %s",
 					vs.Name,
 					connIndex,
-					nodeOverlay.Name, err)
+					VNFServiceMesh.Name, err)
 				s.AppendStatusMsgToVnfService(msg, vsState)
 				return fmt.Errorf(msg)
 			}
@@ -122,7 +122,7 @@ func (s *Plugin) renderToplogyVxlanHubAndSpoke(vs *controller.VNFService,
 
 			renderedEntries := s.NodeRenderVxlanStaticRoutes(fromNode, toNode,
 				vxlanIPFromAddress, vxlanIPToAddress,
-				nodeOverlay.VxlanHubAndSpokeParms.OutgoingInterfaceLabel)
+				VNFServiceMesh.VxlanHubAndSpokeParms.OutgoingInterfaceLabel)
 
 			vsState.RenderedVppAgentEntries = append(vsState.RenderedVppAgentEntries,
 				renderedEntries...)

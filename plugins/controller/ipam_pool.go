@@ -25,7 +25,7 @@ import (
 	"github.com/ligato/sfc-controller/plugins/controller/model"
 )
 
-// IPAMPoolValidate sees if the overlay is defined properly
+// IPAMPoolValidate sees if the pool is defined properly
 func (s *Plugin) IPAMPoolValidate(ipamPool *controller.IPAMPool) error {
 
 	switch ipamPool.Scope {

@@ -80,13 +80,13 @@ func (s *Plugin) RenderTopologyL2MP(vs *controller.VNFService,
 	log.Debugf("RenderTopologyL2MP: num unique nodes for this connection: %d", len(nodeMap))
 	// log.Debugf("RenderTopologyL2MP: v2n=%v, vnfI=%v, conn=%v", v2n, vnfInterfaces, conn)
 
-	// if a node overlay is specified, see if it exists
-	var nodeOverlay controller.NodeOverlay
-	nodeOverlayExists := false
-	if conn.NodeOverlay != "" {
-		nodeOverlay, nodeOverlayExists = s.ramConfigCache.NodeOverlays[conn.NodeOverlay]
-		if !nodeOverlayExists {
-			msg := fmt.Sprintf("vnf-service: %s, conn: %d, referencing a missing node overlay",
+	// if a vnf service mesh is specified, see if it exists
+	var vnfServiceMesh controller.VNFServiceMesh
+	vnfServiceMeshExists := false
+	if conn.VnfServiceMesh != "" {
+		vnfServiceMesh, vnfServiceMeshExists = s.ramConfigCache.VNFServiceMeshes[conn.VnfServiceMesh]
+		if !vnfServiceMeshExists {
+			msg := fmt.Sprintf("vnf-service: %s, conn: %d, referencing a missing vnf service mesh",
 				vs.Name,
 				connIndex)
 			s.AppendStatusMsgToVnfService(msg, vsState)
@@ -97,12 +97,12 @@ func (s *Plugin) RenderTopologyL2MP(vs *controller.VNFService,
 	// see if the vnfs are on the same node ...
 	if len(nodeMap) == 1 {
 		return s.renderToplogySegmentL2MPSameNode(vs, conn, connIndex, vnfInterfaces,
-			&nodeOverlay, v2n, vnfTypes, vsState)
+			&vnfServiceMesh, v2n, vnfTypes, vsState)
 	}
 
 	// now setup the connection between nodes
 	return s.renderToplogySegmentL2MPInterNode(vs, conn, connIndex, vnfInterfaces,
-		&nodeOverlay, v2n, vnfTypes, nodeMap, vsState)
+		&vnfServiceMesh, v2n, vnfTypes, nodeMap, vsState)
 }
 
 // renderToplogySegemtL2MPSameNode renders this L2MP connection set on same node
@@ -110,7 +110,7 @@ func (s *Plugin) renderToplogySegmentL2MPSameNode(vs *controller.VNFService,
 	conn *controller.Connection,
 	connIndex uint32,
 	vnfInterfaces []*controller.Interface,
-	nodeOverlay *controller.NodeOverlay,
+	vnfServiceMesh *controller.VNFServiceMesh,
 	v2n []controller.VNFToNodeMap,
 	vnfTypes []string,
 	vsState *controller.VNFServiceState) error {
@@ -139,8 +139,8 @@ func (s *Plugin) renderToplogySegmentL2MPSameNode(vs *controller.VNFService,
 	// all VNFs are on the same node so no vxlan inter-node mesh code required but
 	// the VNFs might be connected to an external node/router via hub and spoke
 
-	if nodeOverlay.NodeOverlayType == controller.NodeOverlayTypeHubAndSpoke &&
-		nodeOverlay.ConnectionType == controller.NodeOverlayConnectionTypeVxlan {
+	if vnfServiceMesh.ServiceMeshType == controller.VNFServiceMeshTypeHubAndSpoke &&
+		vnfServiceMesh.ConnectionType == controller.VNFServiceMeshConnectionTypeVxlan {
 
 			// construct a spoke set with this one one
 			singleSpokeMap := make(map[string]bool)
@@ -150,7 +150,7 @@ func (s *Plugin) renderToplogySegmentL2MPSameNode(vs *controller.VNFService,
 				conn,
 				connIndex,
 				vnfInterfaces,
-				nodeOverlay,
+				vnfServiceMesh,
 				v2n,
 				vnfTypes,
 				singleSpokeMap,
@@ -214,7 +214,7 @@ func (s *Plugin) renderToplogySegmentL2MPInterNode(vs *controller.VNFService,
 	conn *controller.Connection,
 	connIndex uint32,
 	vnfInterfaces []*controller.Interface,
-	nodeOverlay *controller.NodeOverlay,
+	vnfServiceMesh *controller.VNFServiceMesh,
 	v2n []controller.VNFToNodeMap,
 	vnfTypes []string,
 	nodeMap map[string]bool,
@@ -248,26 +248,26 @@ func (s *Plugin) renderToplogySegmentL2MPInterNode(vs *controller.VNFService,
 		l2bdIFs[v2n[i].Node] = append(l2bdIFs[v2n[i].Node], l2bdIF)
 	}
 
-	switch nodeOverlay.ConnectionType {
-	case controller.NodeOverlayConnectionTypeVxlan:
-		switch nodeOverlay.NodeOverlayType {
-		case controller.NodeOverlayTypeMesh:
+	switch vnfServiceMesh.ConnectionType {
+	case controller.VNFServiceMeshConnectionTypeVxlan:
+		switch vnfServiceMesh.ServiceMeshType {
+		case controller.VNFServiceMeshTypeMesh:
 			return s.renderToplogyVxlanMesh(vs,
 				conn,
 				connIndex,
 				vnfInterfaces,
-				nodeOverlay,
+				vnfServiceMesh,
 				v2n,
 				vnfTypes,
 				nodeMap,
 				l2bdIFs,
 				vsState)
-		case controller.NodeOverlayTypeHubAndSpoke:
+		case controller.VNFServiceMeshTypeHubAndSpoke:
 			return s.renderToplogyVxlanHubAndSpoke(vs,
 				conn,
 				connIndex,
 				vnfInterfaces,
-				nodeOverlay,
+				vnfServiceMesh,
 				v2n,
 				vnfTypes,
 				nodeMap,
@@ -275,10 +275,10 @@ func (s *Plugin) renderToplogySegmentL2MPInterNode(vs *controller.VNFService,
 				vsState)
 		}
 	default:
-		msg := fmt.Sprintf("vnf-service: %s, conn: %d, overlay: %s type not implemented",
+		msg := fmt.Sprintf("vnf-service: %s, conn: %d, service mesh: %s type not implemented",
 			vs.Name,
 			connIndex,
-			nodeOverlay.Name)
+			vnfServiceMesh.Name)
 		s.AppendStatusMsgToVnfService(msg, vsState)
 		return fmt.Errorf(msg)
 	}

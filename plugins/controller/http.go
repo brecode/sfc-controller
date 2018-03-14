@@ -71,8 +71,8 @@ func (s *Plugin) InitHTTPHandlers() {
 	log.Infof("InitHTTPHandlers: registering GET %s", controller.InterfacesStateHTTPPrefix())
 	s.HTTPmux.RegisterHTTPHandler(controller.InterfacesStateHTTPPrefix(), InterfacesStateHandler, "GET")
 
-	log.Infof("InitHTTPHandlers: registering GET %s", controller.NodeOverlaysHTTPPrefix())
-	s.HTTPmux.RegisterHTTPHandler(controller.NodeOverlaysHTTPPrefix(), NodeOverlaysHandler, "GET")
+	log.Infof("InitHTTPHandlers: registering GET %s", controller.VNFServiceMeshesHTTPPrefix())
+	s.HTTPmux.RegisterHTTPHandler(controller.VNFServiceMeshesHTTPPrefix(), VNFServiceMeshesHandler, "GET")
 
 	log.Infof("InitHTTPHandlers: registering GET %s", controller.IPAMPoolsHTTPPrefix())
 	s.HTTPmux.RegisterHTTPHandler(controller.IPAMPoolsHTTPPrefix(), IPAMPoolsHandler, "GET")
@@ -216,16 +216,16 @@ func InterfacesStateHandler(formatter *render.Render) http.HandlerFunc {
 }
 
 
-// NodeOverlaysHandler GET: curl -v http://localhost:9191/sfc_controller/v2/config/node-overlays
-func NodeOverlaysHandler(formatter *render.Render) http.HandlerFunc {
+// VNFServiceMeshesHandler GET: curl -v http://localhost:9191/sfc_controller/v2/config/vnf-service-meshes
+func VNFServiceMeshesHandler(formatter *render.Render) http.HandlerFunc {
 
 	return func(w http.ResponseWriter, req *http.Request) {
-		log.Debugf("Node Overlays HTTP handler: Method %s, URL: %s", req.Method, req.URL)
+		log.Debugf("VNF Service Meshes HTTP handler: Method %s, URL: %s", req.Method, req.URL)
 
 		switch req.Method {
 		case "GET":
-			var array = make([]controller.NodeOverlay, 0)
-			for _, n := range sfcplg.ramConfigCache.NodeOverlays {
+			var array = make([]controller.VNFServiceMesh, 0)
+			for _, n := range sfcplg.ramConfigCache.VNFServiceMeshes {
 				array = append(array, n)
 			}
 			formatter.JSON(w, http.StatusOK, array)

@@ -76,23 +76,23 @@ func init() {
 // CacheType is ram cache of controller entities indexed by entity name
 type CacheType struct {
 	// config
-	Nodes        map[string]controller.Node
-	VNFServices  map[string]controller.VNFService
-	VNFToNodeMap map[string]controller.VNFToNodeMap
-	NodeOverlays map[string]controller.NodeOverlay
-	IPAMPools    map[string]controller.IPAMPool
-	SysParms     controller.SystemParameters
+	Nodes            map[string]controller.Node
+	VNFServices      map[string]controller.VNFService
+	VNFToNodeMap     map[string]controller.VNFToNodeMap
+	VNFServiceMeshes map[string]controller.VNFServiceMesh
+	IPAMPools        map[string]controller.IPAMPool
+	SysParms         controller.SystemParameters
 
 	// state
-	InterfaceStates           map[string]controller.InterfaceState
-	VppEntries                map[string]*vppagentapi.KeyValueEntryType
-	VNFServicesState          map[string]*controller.VNFServiceState
-	NodeState                 map[string]*controller.NodeState
-	MacAddrAllocator          *idapi.MacAddrAllocatorType
-	MemifIDAllocator          *idapi.MemifAllocatorType
-	IPAMPoolAllocators        map[string]*ipam.PoolAllocatorType
-	NodeOverlayVniAllocators  map[string]*idapi.VxlanVniAllocatorType
-	NodeOverlayVxLanAddresses map[string]string
+	InterfaceStates              map[string]controller.InterfaceState
+	VppEntries                   map[string]*vppagentapi.KeyValueEntryType
+	VNFServicesState             map[string]*controller.VNFServiceState
+	NodeState                    map[string]*controller.NodeState
+	MacAddrAllocator             *idapi.MacAddrAllocatorType
+	MemifIDAllocator             *idapi.MemifAllocatorType
+	IPAMPoolAllocators           map[string]*ipam.PoolAllocatorType
+	VNFServiceMeshVniAllocators  map[string]*idapi.VxlanVniAllocatorType
+	VNFServiceMeshVxLanAddresses map[string]string
 }
 
 // Plugin contains the controllers information
@@ -116,7 +116,6 @@ func (s *Plugin) Init() error {
 	s.StatusCheck.ReportStateChange(PluginID, statuscheck.Init, nil)
 
 	s.db = s.Etcd.NewBroker(keyval.Root)
-
 	s.InitRAMCache()
 
 	//extentitydriver.SfcExternalEntityDriverInit()
@@ -184,6 +183,8 @@ func (s *Plugin) AfterInit() error {
 		os.Exit(1)
 	}
 
+	s.StartWatchers()
+
 	s.StatusCheck.ReportStateChange(PluginID, statuscheck.OK, nil)
 
 	return nil
@@ -202,19 +203,19 @@ func (s *Plugin) InitRAMCache() {
 	s.ramConfigCache.VNFServices = nil
 	s.ramConfigCache.VNFServices = make(map[string]controller.VNFService)
 
-	s.ramConfigCache.NodeOverlays = nil
-	s.ramConfigCache.NodeOverlays = make(map[string]controller.NodeOverlay)
+	s.ramConfigCache.VNFServiceMeshes = nil
+	s.ramConfigCache.VNFServiceMeshes = make(map[string]controller.VNFServiceMesh)
 
 	s.ramConfigCache.IPAMPools = nil
 	s.ramConfigCache.IPAMPools = make(map[string]controller.IPAMPool)
 	s.ramConfigCache.IPAMPoolAllocators = nil
 	s.ramConfigCache.IPAMPoolAllocators = make(map[string]*ipam.PoolAllocatorType)
 
-	s.ramConfigCache.NodeOverlayVniAllocators = nil
-	s.ramConfigCache.NodeOverlayVniAllocators = make(map[string]*idapi.VxlanVniAllocatorType)
+	s.ramConfigCache.VNFServiceMeshVniAllocators = nil
+	s.ramConfigCache.VNFServiceMeshVniAllocators = make(map[string]*idapi.VxlanVniAllocatorType)
 
-	s.ramConfigCache.NodeOverlayVxLanAddresses = nil
-	s.ramConfigCache.NodeOverlayVxLanAddresses = make(map[string]string)
+	s.ramConfigCache.VNFServiceMeshVxLanAddresses = nil
+	s.ramConfigCache.VNFServiceMeshVxLanAddresses = make(map[string]string)
 
 	s.ramConfigCache.VNFToNodeMap = nil
 	s.ramConfigCache.VNFToNodeMap = make(map[string]controller.VNFToNodeMap)

@@ -10,16 +10,16 @@ ipam_pools: # allocate internode vxlan mesh enpoints from a pool
 
 vnf_to_node_map: # this mapping can be static or supplied by k8s discovering pod placement
   - vnf: vnf1
-    node: vswitch1
+    node: k8s-master
   - vnf: vnf2
-    node: vswitch2
+    node: k8s-worker1
   - vnf: vnf3
-    node: vswitch1
+    node: k8s-master
   - vnf: vnf4
-    node: vswitch2
+    node: k8s-worker1
 
 nodes:
-  - name: vswitch1
+  - name: k8s-master
     node_type: host
     interfaces:
       - name: GigabitEthernet13/0/1
@@ -28,7 +28,7 @@ nodes:
           - "10.100.1.1/24"
         mac_address: 02:00:00:00:00:01
 
-  - name: vswitch2
+  - name: k8s-worker1
     node_type: host
     interfaces:
       - name: GigabitEthernet13/0/2
@@ -60,7 +60,7 @@ vnf_services:
               inter_vnf_conn: vswitch
     connections:
       - conn_type: l2pp
-        node_overlay: intra_node_vxlan_mesh
+        vnf_service_mesh: inter_node_vxlan_mesh
         interfaces:
           - vnf: vnf1
             interface: port1
@@ -84,19 +84,18 @@ vnf_services:
               - "10.0.10.2/24"
     connections:
       - conn_type: l2pp
-        node_overlay: intra_node_vxlan_mesh
+        vnf_service_mesh: inter_node_vxlan_mesh
         interfaces:
           - vnf: vnf3
             interface: port1
           - vnf: vnf4
             interface: port1
 
-node_overlays:
-  - name: intra_node_vxlan_mesh
-    node_overlay_type: mesh
+vnf_service_meshes:
+  - name: inter_node_vxlan_mesh
+    service_mesh_type: mesh
     connection_type: vxlan
     vxlan_mesh_parms:
       vni_range_start: 5000
       vni_range_end: 5999
       loopback_ipam_pool_name: vxlan_loopback_pool
-      #outgoing_interface_label: vxlan

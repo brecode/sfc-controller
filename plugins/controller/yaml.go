@@ -27,14 +27,14 @@ import (
 
 // YamlConfig is container struct for yaml config file
 type YamlConfig struct {
-	Version      int                         `json:"sfc_controller_config_version"`
-	Description  string                      `json:"description"`
-	Nodes        []controller.Node           `json:"nodes"`
-	VNFServices  []controller.VNFService     `json:"vnf_services"`
-	SysParms     controller.SystemParameters `json:"system_parameters"`
-	VNFToNodeMap []controller.VNFToNodeMap   `json:"vnf_to_node_map"`
-	NodeOverlays []controller.NodeOverlay    `json:"node_overlays"`
-	IPAMPools    []controller.IPAMPool       `json:"ipam_pools"`
+	Version          int                         `json:"sfc_controller_config_version"`
+	Description      string                      `json:"description"`
+	Nodes            []controller.Node           `json:"nodes"`
+	VNFServices      []controller.VNFService     `json:"vnf_services"`
+	SysParms         controller.SystemParameters `json:"system_parameters"`
+	VNFToNodeMap     []controller.VNFToNodeMap   `json:"vnf_to_node_map"`
+	VNFServiceMeshes []controller.VNFServiceMesh `json:"vnf_service_meshes"`
+	IPAMPools        []controller.IPAMPool       `json:"ipam_pools"`
 }
 
 // ReadYamlConfigFromFile parses the yaml into YamlConfig
@@ -93,8 +93,8 @@ func (s *Plugin) ProcessYamlConfig(y *YamlConfig) error {
 		return err
 	}
 
-	log.Debugf("ProcessYamlConfig: node-overlays: ", y.NodeOverlays)
-	if err := s.NodeOverlaysCreate(y.NodeOverlays, false); err != nil {
+	log.Debugf("ProcessYamlConfig: vnf-service-meshes: ", y.VNFServiceMeshes)
+	if err := s.VNFServiceMeshsCreate(y.VNFServiceMeshes, false); err != nil {
 		return err
 	}
 

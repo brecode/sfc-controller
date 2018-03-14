@@ -97,6 +97,21 @@ func VNFToNodeKey(vnf string) string {
 	return VNFToNodeKeyPrefix() + vnf
 }
 
+// VNFToNodeKeyStatusPrefix provides sfc controller's node key prefix
+func VNFToNodeKeyStatusPrefix() string {
+	return SfcControllerStatusPrefix() + "vnf-to-node/"
+}
+
+// VNFToNodeMapStatusHTTPPrefix provides sfc controller's vnf-node-map prefix
+func VNFToNodeMapStatusHTTPPrefix() string {
+	return SfcControllerConfigPrefix() + "vnf-to-node-map"
+}
+
+// VNFToNodeStatusKey provides sfc controller's vnf key prefix
+func VNFToNodeStatusKey(vnf string) string {
+	return VNFToNodeKeyStatusPrefix() + vnf
+}
+
 // VNFServiceKeyStatusPrefix provides sfc controller's VNFService key prefix
 func VNFServiceKeyStatusPrefix() string {
 	return SfcControllerStatusPrefix() + "vnf-service/"
@@ -132,19 +147,19 @@ func VPPEntriesHTTPPrefix() string {
 	return SfcControllerStatusPrefix() + "vpp-entries"
 }
 
-// NodeOverlayPrefix provides sfc controller's node key prefix
-func NodeOverlayPrefix() string {
-	return SfcControllerConfigPrefix() + "node-overlay/"
+// VNFServiceMeshPrefix provides sfc controller's key prefix
+func VNFServiceMeshPrefix() string {
+	return SfcControllerConfigPrefix() + "vnf-service-mesh/"
 }
 
-// NodeOverlaysHTTPPrefix provides sfc controller's nodes retrieve HTTP prefix
-func NodeOverlaysHTTPPrefix() string {
-	return SfcControllerConfigPrefix() + "node-overlays"
+// VNFServiceMeshesHTTPPrefix provides sfc controller's retrieve HTTP prefix
+func VNFServiceMeshesHTTPPrefix() string {
+	return SfcControllerConfigPrefix() + "vnf-service-meshes"
 }
 
-// NodeOverlayNameKey provides sfc controller's node name key prefix
-func NodeOverlayNameKey(name string) string {
-	return NodeOverlayPrefix() + name
+// VNFServiceMeshNameKey provides sfc controller's name key prefix
+func VNFServiceMeshNameKey(name string) string {
+	return VNFServiceMeshPrefix() + name
 }
 
 // IPAMPoolPrefix provides sfc controller's ipam pool key prefix
