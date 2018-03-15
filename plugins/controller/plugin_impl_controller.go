@@ -88,6 +88,7 @@ type CacheType struct {
 	VppEntries                   map[string]*vppagentapi.KeyValueEntryType
 	VNFServicesState             map[string]*controller.VNFServiceState
 	NodeState                    map[string]*controller.NodeState
+	VNFToNodeStateMap            map[string]controller.VNFToNodeMap
 	MacAddrAllocator             *idapi.MacAddrAllocatorType
 	MemifIDAllocator             *idapi.MemifAllocatorType
 	IPAMPoolAllocators           map[string]*ipam.PoolAllocatorType
@@ -219,6 +220,9 @@ func (s *Plugin) InitRAMCache() {
 
 	s.ramConfigCache.VNFToNodeMap = nil
 	s.ramConfigCache.VNFToNodeMap = make(map[string]controller.VNFToNodeMap)
+
+	s.ramConfigCache.VNFToNodeStateMap = nil
+	s.ramConfigCache.VNFToNodeStateMap = make(map[string]controller.VNFToNodeMap)
 
 	s.ramConfigCache.VNFServicesState = nil
 	s.ramConfigCache.VNFServicesState = make(map[string]*controller.VNFServiceState)

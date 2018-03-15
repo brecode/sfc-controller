@@ -96,12 +96,12 @@ func (s *Plugin) VNFServiceMeshCreate(vsm *controller.VNFServiceMesh, render boo
 	return nil
 }
 
-// VNFServiceMeshsCreate add each to ram cache and run topology side effects
-func (s *Plugin) VNFServiceMeshsCreate(VNFServiceMeshs []controller.VNFServiceMesh, render bool) error {
+// VNFServiceMeshesCreate add each to ram cache and run topology side effects
+func (s *Plugin) VNFServiceMeshesCreate(VNFServiceMeshes []controller.VNFServiceMesh, render bool) error {
 
-	for _, no := range VNFServiceMeshs {
+	for _, vsm := range VNFServiceMeshes {
 
-		if err := s.VNFServiceMeshCreate(&no, false); err != nil {
+		if err := s.VNFServiceMeshCreate(&vsm, false); err != nil {
 			return err
 		}
 	}

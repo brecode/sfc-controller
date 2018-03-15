@@ -104,7 +104,7 @@ func VNFToNodeKeyStatusPrefix() string {
 
 // VNFToNodeMapStatusHTTPPrefix provides sfc controller's vnf-node-map prefix
 func VNFToNodeMapStatusHTTPPrefix() string {
-	return SfcControllerConfigPrefix() + "vnf-to-node-map"
+	return SfcControllerStatusPrefix() + "vnf-to-node-map"
 }
 
 // VNFToNodeStatusKey provides sfc controller's vnf key prefix

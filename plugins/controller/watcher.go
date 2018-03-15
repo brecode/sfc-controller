@@ -40,52 +40,30 @@ func (s *Plugin) RunVnfToNodeMappingWatcher() {
 
 	respChan := make(chan keyval.ProtoWatchResp, 0)
 
-	// Register watcher and select the respChan channel as the destination
-	// for the delivery of all the change events.
-	watcher := s.Etcd.NewWatcher(controller.VNFToNodeKeyPrefix())
-	
-	//err := watcher.Watch(keyval.ToChanProto(respChan), make(chan string), controller.VNFToNodeKeyPrefix())
+	watcher := s.Etcd.NewWatcher(controller.VNFToNodeKeyStatusPrefix())
+
 	err := watcher.Watch(keyval.ToChanProto(respChan), make(chan string), "")
 	if err != nil {
 		log.Errorf("RunVnfToNodeMappingWatcher: cannot watch: %s", err)
 		os.Exit(1)
 	}
-	log.Debugf("RunVnfToNodeMappingWatcher: watching the key: %s", controller.VNFToNodeKeyPrefix())
+	log.Debugf("RunVnfToNodeMappingWatcher: watching the key: %s", controller.VNFToNodeKeyStatusPrefix())
 
 	for {
 		select {
 		case resp := <-respChan:
 			switch resp.GetChangeType() {
 			case datasync.Put:
-				//contact := &phonebook.Contact{}
-				//prevContact := &phonebook.Contact{}
-				log.Infof("Creating ", resp.GetKey())
-				//resp.GetValue(contact)
-				// exists, err := resp.GetPrevValue(prevContact)
-				// if err != nil {
-				// 	logrus.DefaultLogger().Errorf("err: %v\n", err)
-				// }
-				// printContact(contact)
-				// if exists {
-				// 	printPrevContact(prevContact)
-				// } else {
-				// 	fmt.Printf("Previous value does not exist\n")
-				// }
+				v2n := &controller.VNFToNodeMap{}
+				if err :=resp.GetValue(v2n); err == nil {
+					log.Infof("RunVnfToNodeMappingWatcher: key: %s, value:%v", resp.GetKey(), v2n)
+					s.VNFToNodeStateCreate(v2n, true)
+				}
+
 			case datasync.Delete:
-				log.Infof("Removing ", resp.GetKey())
-				// prevContact := &phonebook.Contact{}
-				// exists, err := resp.GetPrevValue(prevContact)
-				// if err != nil {
-				// 	logrus.DefaultLogger().Errorf("err: %v\n", err)
-				// }
-				// if exists {
-				// 	printPrevContact(prevContact)
-				// } else {
-				// 	fmt.Printf("Previous value does not exist\n")
-				// }
+				log.Infof("RunVnfToNodeMappingWatcher: deleting key: %s ", resp.GetKey())
+				s.VNFToNodeStateDelete(resp.GetKey(), true)
 			}
-		// case <-sigChan:
-		// 	break watcherLoop
 		}
 	}
 }

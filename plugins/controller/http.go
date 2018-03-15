@@ -55,6 +55,10 @@ func (s *Plugin) InitHTTPHandlers() {
 	s.HTTPmux.RegisterHTTPHandler(controller.VNFToNodeMapHTTPPrefix(),
 		vnfToNodeMapHandler, "GET", "POST")
 
+	log.Infof("InitHTTPHandlers: registering GET %s", controller.VNFToNodeMapStatusHTTPPrefix())
+	s.HTTPmux.RegisterHTTPHandler(controller.VNFToNodeMapStatusHTTPPrefix(),
+		vnfToNodeMapStatusHandler, "GET")
+
 	log.Infof("InitHTTPHandlers: registering GET %s", controller.VNFServicesStatusHTTPPrefix())
 	s.HTTPmux.RegisterHTTPHandler(controller.VNFServicesStatusHTTPPrefix(),
 		VNFServicesStatusHandler, "GET")
@@ -80,6 +84,24 @@ func (s *Plugin) InitHTTPHandlers() {
 	log.Infof("InitHTTPHandlers: registering GET %s", controller.VPPEntriesHTTPPrefix())
 	s.HTTPmux.RegisterHTTPHandler(controller.VPPEntriesHTTPPrefix(), VPPEntriesHandler, "GET")
 
+}
+
+// Example curl invocations: for obtaining ALL external_entities
+//   - GET:  curl http://localhost:9191/sfc-controller/v2/status/vnf-to-node-map
+func vnfToNodeMapStatusHandler(formatter *render.Render) http.HandlerFunc {
+
+	return func(w http.ResponseWriter, req *http.Request) {
+		log.Debugf("VNF To Node Map HTTP handler: Method %s, URL: %s", req.Method, req.URL)
+
+		switch req.Method {
+		case "GET":
+			var array = make([]controller.VNFToNodeMap, 0)
+			for _, v2n := range sfcplg.ramConfigCache.VNFToNodeStateMap {
+				array = append(array, v2n)
+			}
+			formatter.JSON(w, http.StatusOK, array)
+		}
+	}
 }
 
 // Example curl invocations: for obtaining ALL external_entities
@@ -215,7 +237,6 @@ func InterfacesStateHandler(formatter *render.Render) http.HandlerFunc {
 	}
 }
 
-
 // VNFServiceMeshesHandler GET: curl -v http://localhost:9191/sfc_controller/v2/config/vnf-service-meshes
 func VNFServiceMeshesHandler(formatter *render.Render) http.HandlerFunc {
 
@@ -249,7 +270,6 @@ func IPAMPoolsHandler(formatter *render.Render) http.HandlerFunc {
 		}
 	}
 }
-
 
 // VPPEntriesHandler GET: curl -v http://localhost:9191/sfc_controller/v2/status/vpp-entries
 func VPPEntriesHandler(formatter *render.Render) http.HandlerFunc {

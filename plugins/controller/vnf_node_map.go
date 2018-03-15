@@ -59,12 +59,47 @@ func (s *Plugin) VNFToNodeMapCreate(v2nMap []controller.VNFToNodeMap, runSideEff
 			return err
 		}
 
+		// for static config add to the config cache
 		s.ramConfigCache.VNFToNodeMap[v2n.Vnf] = v2n
+		// add the configured map to the state as well as all services hooks into state map
+		s.ramConfigCache.VNFToNodeStateMap[v2n.Vnf] = v2n
 
 		if err := s.VNFToNodeWriteToDatastore(&v2n); err != nil {
 			return err
 		}
 	}
+
+	// process all vnfs and re-render vpp agent configs in case a vnf moved from
+	// one host to another
+	if runSideEffects {
+		if err := s.VNFServicesRender(); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+// VNFToNodeStateCreate add to ram cache and run topology side effects
+func (s *Plugin) VNFToNodeStateCreate(v2n *controller.VNFToNodeMap, runSideEffects bool) error {
+
+	s.ramConfigCache.VNFToNodeStateMap[v2n.Vnf] = *v2n
+
+	// process all vnfs and re-render vpp agent configs in case a vnf moved from
+	// one host to another
+	if runSideEffects {
+		if err := s.VNFServicesRender(); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+// VNFToNodeStateDelete remove from state cache and topology side effects
+func (s *Plugin) VNFToNodeStateDelete(vnf string, runSideEffects bool) error {
+
+	delete(s.ramConfigCache.VNFToNodeStateMap, vnf)
 
 	// process all vnfs and re-render vpp agent configs in case a vnf moved from
 	// one host to another

@@ -94,7 +94,7 @@ func (s *Plugin) ProcessYamlConfig(y *YamlConfig) error {
 	}
 
 	log.Debugf("ProcessYamlConfig: vnf-service-meshes: ", y.VNFServiceMeshes)
-	if err := s.VNFServiceMeshsCreate(y.VNFServiceMeshes, false); err != nil {
+	if err := s.VNFServiceMeshesCreate(y.VNFServiceMeshes, false); err != nil {
 		return err
 	}
 

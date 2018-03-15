@@ -44,7 +44,7 @@ func (s *Plugin) RenderTopologyL2MP(vs *controller.VNFService,
 	// let's see if all interfaces in the conn are associated with a node
 	for _, connInterface := range conn.Interfaces {
 
-		v, exists := s.ramConfigCache.VNFToNodeMap[connInterface.Vnf]
+		v, exists := s.ramConfigCache.VNFToNodeStateMap[connInterface.Vnf]
 		if !exists || v.Node == "" {
 			msg := fmt.Sprintf("connection segment: %s/%s, vnf not mapped to a node in vnf_to_node_map",
 				connInterface.Vnf, connInterface.Interface)
