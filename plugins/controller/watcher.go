@@ -22,6 +22,7 @@ package controller
 
 import (
 	"os"
+	"time"
 	"github.com/ligato/cn-infra/datasync"
 	"github.com/ligato/cn-infra/db/keyval"
 	"github.com/ligato/sfc-controller/plugins/controller/model"
@@ -38,10 +39,31 @@ func (s *Plugin) RunVnfToNodeMappingWatcher() {
 	log.Info("RunVnfToNodeMappingWatcher: enter ...")
 	defer log.Info("RunVnfToNodeMappingWatcher: exit ...")
 
+    go func() {
+		// back up timer ... paranoid about missing events ...
+		// check every minute just in case
+		ticker := time.NewTicker(1 * time.Minute)
+        for _ = range ticker.C {
+			tempV2NStateMap := make(map[string]controller.VNFToNodeMap)
+			s.LoadVNFToNodeMapStateFromDatastore(tempV2NStateMap)
+			renderingRequired := false
+			for _, tempV2NMap := range tempV2NStateMap {
+				v2nMap, exists := s.ramConfigCache.VNFToNodeStateMap[tempV2NMap.Vnf]
+				//log.Debugf("RunVnfToNodeMappingWatcher: timer v2n: %v", v2nMap)
+				if !exists || v2nMap.Node !=  tempV2NMap.Node {
+					renderingRequired = true
+					s.VNFToNodeStateCreate(&tempV2NMap, false)
+				}
+			}
+			if renderingRequired {
+				s.RenderConfig()
+			}
+			tempV2NStateMap = nil
+        }
+    }()
+
 	respChan := make(chan keyval.ProtoWatchResp, 0)
-
 	watcher := s.Etcd.NewWatcher(controller.VNFToNodeKeyStatusPrefix())
-
 	err := watcher.Watch(keyval.ToChanProto(respChan), make(chan string), "")
 	if err != nil {
 		log.Errorf("RunVnfToNodeMappingWatcher: cannot watch: %s", err)

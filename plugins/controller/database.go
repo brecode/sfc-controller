@@ -187,6 +187,17 @@ func (s *Plugin) LoadVNFToNodeMapFromDatastore(v2nMap map[string]controller.VNFT
 		})
 }
 
+// LoadVNFToNodeMapStateFromDatastore iterates over the etcd set
+func (s *Plugin) LoadVNFToNodeMapStateFromDatastore(v2nMap map[string]controller.VNFToNodeMap) error {
+	//log.Debugf("LoadVNFToNodeMapStateFromDatastore: ...")
+	v2n := &controller.VNFToNodeMap{}
+	return s.readIterate(controller.VNFToNodeKeyStatusPrefix(),
+		func() proto.Message { return v2n },
+		func(data proto.Message) {
+			v2nMap[v2n.Vnf] = *v2n
+			//log.Debugf("LoadVNFToNodeMapStateFromDatastore: v=%v", v2n)
+		})
+}
 // LoadAllVNFServiceMeshesFromDatastore iterates over the etcd set
 func (s *Plugin) LoadAllVNFServiceMeshesFromDatastore(vnfServiceMeshes map[string]controller.VNFServiceMesh) error {
 	log.Debugf("LoadAllVNFServiceMeshesFromDatastore: ...")

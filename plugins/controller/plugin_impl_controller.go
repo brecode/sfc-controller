@@ -66,8 +66,8 @@ func LogFlags() {
 // when the plugin is loaded into the Agent.
 func init() {
 	// Logger must be initialized for each s individually.
-	log.SetLevel(logging.DebugLevel)
-	//TODO with Lukas pluginapi.RegisterLogger(PluginID, log.StandardLogger())
+	//log.SetLevel(logging.DebugLevel)
+	log.SetLevel(logging.InfoLevel)
 
 	RegisterFlags()
 
