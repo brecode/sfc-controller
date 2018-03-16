@@ -55,7 +55,7 @@ func (s *Plugin) RenderToplogyMemifPair(vs *controller.VNFService,
 	var ifName string
 
 	ifState, err := s.initInterfaceState(vs, vppAgent, connInterface.Vnf,
-		vnfInterface, true, vsState)
+		vnfInterface, vsState)
 	if err != nil {
 		return "", err
 	}
@@ -87,7 +87,7 @@ func (s *Plugin) RenderToplogyMemifPair(vs *controller.VNFService,
 		vppAgent,
 		ifName,
 		[]string{},
-		ifState.MateMacAddress,
+		"",
 		s.ResolveMtu(vnfInterface.Mtu),
 		vnfInterface.AdminStatus,
 		s.ResolveRxMode(vnfInterface.RxMode),
@@ -131,7 +131,7 @@ func (s *Plugin) RenderToplogyDirectInterVnfMemifPair(vs *controller.VNFService,
 	vsState *controller.VNFServiceState) error {
 
 	if0State, err := s.initInterfaceState(vs, conn.Interfaces[0].Vnf,
-		conn.Interfaces[0].Vnf, vnfInterfaces[0], false, vsState)
+		conn.Interfaces[0].Vnf, vnfInterfaces[0], vsState)
 	if err != nil {
 		return err
 	}
@@ -160,7 +160,7 @@ func (s *Plugin) RenderToplogyDirectInterVnfMemifPair(vs *controller.VNFService,
 		conn.Interfaces[0].Vnf, vnfInterfaces[0].Name, vppKV)
 
 	if1State, err := s.initInterfaceState(vs, conn.Interfaces[1].Vnf,
-		conn.Interfaces[1].Vnf, vnfInterfaces[1], false, vsState)
+		conn.Interfaces[1].Vnf, vnfInterfaces[1], vsState)
 	if err != nil {
 		return err
 	}
@@ -210,6 +210,14 @@ func (s *Plugin) RenderToplogyVethAfpPair(vs *controller.VNFService,
 
 	var ifName string
 
+	ifState, err := s.initInterfaceState(vs, vppAgent, connInterface.Vnf,
+		vnfInterface, vsState)
+	if err != nil {
+		return "", err
+	}
+	s.persistInterfaceState(ifState, connInterface.Vnf,
+		vnfInterface.Name)
+
 	// Create a VETH i/f for the vnf container, the ETH will get created
 	// by the vpp-agent in a more privileged vswitch.
 	// Note: In Linux kernel the length of an interface name is limited by
@@ -223,7 +231,7 @@ func (s *Plugin) RenderToplogyVethAfpPair(vs *controller.VNFService,
 	baseHostName := constructBaseHostName(connInterface.Vnf, connInterface.Interface)
 	host2Name := baseHostName
 
-	vethIPAddresses := vnfInterface.IpAddresses
+	vethIPAddresses := ifState.IpAddresses
 	if vnfType == controller.VNFTypeVPPContainer {
 		vethIPAddresses = []string{}
 	}
@@ -231,7 +239,7 @@ func (s *Plugin) RenderToplogyVethAfpPair(vs *controller.VNFService,
 	vppKV := vppagentapi.ConstructVEthInterface(vppAgent,
 		veth1Name,
 		vethIPAddresses,
-		vnfInterface.MacAddress,
+		ifState.MacAddress,
 		s.ResolveMtu(vnfInterface.Mtu),
 		vnfInterface.AdminStatus,
 		host1Name,
@@ -257,8 +265,8 @@ func (s *Plugin) RenderToplogyVethAfpPair(vs *controller.VNFService,
 	if vnfType == controller.VNFTypeVPPContainer {
 		vppKV = vppagentapi.ConstructAFPacketInterface(connInterface.Vnf,
 			vnfInterface.Name,
-			vnfInterface.IpAddresses,
-			vnfInterface.MacAddress,
+			ifState.IpAddresses,
+			ifState.MacAddress,
 			s.ResolveMtu(vnfInterface.Mtu),
 			vnfInterface.AdminStatus,
 			s.ResolveRxMode(vnfInterface.RxMode),
@@ -286,7 +294,6 @@ func (s *Plugin) initInterfaceState(vs *controller.VNFService,
 	vppAgent string,
 	vnf string,
 	vnfInterface *controller.Interface,
-	genMateMac bool,
 	vsState *controller.VNFServiceState) (*controller.InterfaceState, error) {
 
 	ifState, exists := s.ramConfigCache.InterfaceStates[vnf+"/"+vnfInterface.Name]
@@ -305,11 +312,6 @@ func (s *Plugin) initInterfaceState(vs *controller.VNFService,
 	} else {
 		if ifState.MacAddress != vnfInterface.MacAddress {
 			ifState.MacAddress = vnfInterface.MacAddress
-		}
-	}
-	if genMateMac {
-		if ifState.MateMacAddress == "" {
-			ifState.MateMacAddress = s.ramConfigCache.MacAddrAllocator.Allocate()
 		}
 	}
 	if len(vnfInterface.IpAddresses) == 0 {

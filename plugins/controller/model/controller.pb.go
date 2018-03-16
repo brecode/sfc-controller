@@ -410,16 +410,15 @@ func (m *VNFServiceState) GetRenderedVppAgentEntries() []*RenderedVppAgentEntry 
 }
 
 type InterfaceState struct {
-	Vnf            string   `protobuf:"bytes,1,opt,name=vnf,proto3" json:"vnf,omitempty"`
-	Interface      string   `protobuf:"bytes,2,opt,name=interface,proto3" json:"interface,omitempty"`
-	OperStatus     string   `protobuf:"bytes,3,opt,name=oper_status,proto3" json:"oper_status,omitempty"`
-	Msg            []string `protobuf:"bytes,4,rep,name=msg" json:"msg,omitempty"`
-	MacAddress     string   `protobuf:"bytes,5,opt,name=mac_address,proto3" json:"mac_address,omitempty"`
-	MateMacAddress string   `protobuf:"bytes,6,opt,name=mate_mac_address,proto3" json:"mate_mac_address,omitempty"`
-	IpAddresses    []string `protobuf:"bytes,7,rep,name=ip_addresses" json:"ip_addresses,omitempty"`
-	MemifID        uint32   `protobuf:"varint,8,opt,name=memifID,proto3" json:"memifID,omitempty"`
-	VrfID          uint32   `protobuf:"varint,9,opt,name=vrfID,proto3" json:"vrfID,omitempty"`
-	Node           string   `protobuf:"bytes,10,opt,name=node,proto3" json:"node,omitempty"`
+	Vnf         string   `protobuf:"bytes,1,opt,name=vnf,proto3" json:"vnf,omitempty"`
+	Interface   string   `protobuf:"bytes,2,opt,name=interface,proto3" json:"interface,omitempty"`
+	OperStatus  string   `protobuf:"bytes,3,opt,name=oper_status,proto3" json:"oper_status,omitempty"`
+	Msg         []string `protobuf:"bytes,4,rep,name=msg" json:"msg,omitempty"`
+	MacAddress  string   `protobuf:"bytes,5,opt,name=mac_address,proto3" json:"mac_address,omitempty"`
+	IpAddresses []string `protobuf:"bytes,7,rep,name=ip_addresses" json:"ip_addresses,omitempty"`
+	MemifID     uint32   `protobuf:"varint,8,opt,name=memifID,proto3" json:"memifID,omitempty"`
+	VrfID       uint32   `protobuf:"varint,9,opt,name=vrfID,proto3" json:"vrfID,omitempty"`
+	Node        string   `protobuf:"bytes,10,opt,name=node,proto3" json:"node,omitempty"`
 }
 
 func (m *InterfaceState) Reset()         { *m = InterfaceState{} }
