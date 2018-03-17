@@ -32,6 +32,11 @@ func SfcControllerStatusPrefix() string {
 	return SfcControllerPrefix() + "v2/status/"
 }
 
+// SfcControllerContivKSRPrefix is the base for all contiv ksr entries
+func SfcControllerContivKSRPrefix() string {
+	return "/vnf-agent/contiv-ksr"
+}
+
 // SystemParametersKey provides sfc controller's system parameter key
 func SystemParametersKey() string {
 	return SfcControllerConfigPrefix() + "system-parameters"
@@ -99,12 +104,12 @@ func VNFToNodeKey(vnf string) string {
 
 // VNFToNodeKeyStatusPrefix provides sfc controller's node key prefix
 func VNFToNodeKeyStatusPrefix() string {
-	return SfcControllerStatusPrefix() + "vnf-to-node/"
+	return SfcControllerContivKSRPrefix() + SfcControllerStatusPrefix() + "vnf-to-node/"
 }
 
 // VNFToNodeMapStatusHTTPPrefix provides sfc controller's vnf-node-map prefix
 func VNFToNodeMapStatusHTTPPrefix() string {
-	return SfcControllerStatusPrefix() + "vnf-to-node-map"
+	return SfcControllerContivKSRPrefix() + SfcControllerStatusPrefix() + "vnf-to-node-map"
 }
 
 // VNFToNodeStatusKey provides sfc controller's vnf key prefix

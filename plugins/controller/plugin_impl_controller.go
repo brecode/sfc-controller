@@ -44,6 +44,7 @@ const PluginID core.PluginName = "SfcController"
 var (
 	sfcConfigFile     string // cli flag - see RegisterFlags
 	cleanSfcDatastore bool   // cli flag - see RegisterFlags
+	ContivKSREnabled bool   // cli flag - see RegisterFlags
 	log               = logrus.DefaultLogger()
 )
 
@@ -53,12 +54,16 @@ func RegisterFlags() {
 		"Name of a sfc config (yaml) file to load at startup")
 	flag.BoolVar(&cleanSfcDatastore, "clean", false,
 		"Clean the SFC datastore entries")
+	flag.BoolVar(&ContivKSREnabled, "contiv-ksr", false,
+		"Interact with contiv ksr to learn k8s config/state")
 }
 
 // LogFlags dumps the command line flags
 func LogFlags() {
 	log.Debugf("LogFlags:")
 	log.Debugf("\tsfcConfigFile:'%s'", sfcConfigFile)
+	log.Debugf("\tclean:'%v'", cleanSfcDatastore)
+	log.Debugf("\tcontiv ksr:'%v'", ContivKSREnabled)
 }
 
 // Init is the Go init() function for the s. It should
@@ -70,7 +75,6 @@ func init() {
 	log.SetLevel(logging.InfoLevel)
 
 	RegisterFlags()
-
 }
 
 // CacheType is ram cache of controller entities indexed by entity name
