@@ -46,7 +46,9 @@ func (s *Plugin) RunContivKSRVnfToNodeMappingWatcher() {
 				}
 			}
 			if renderingRequired {
+				s.ConfigTransactionStart()
 				s.RenderConfig()
+				s.ConfigTransactionEnd()
 			}
 			tempV2NStateMap = nil
 		}
@@ -70,12 +72,16 @@ func (s *Plugin) RunContivKSRVnfToNodeMappingWatcher() {
 				v2n := &controller.VNFToNodeMap{}
 				if err := resp.GetValue(v2n); err == nil {
 					log.Infof("RunContivKSRVnfToNodeMappingWatcher: key: %s, value:%v", resp.GetKey(), v2n)
+					s.ConfigTransactionStart()
 					s.VNFToNodeStateCreate(v2n, true)
+					s.ConfigTransactionEnd()
 				}
 
 			case datasync.Delete:
 				log.Infof("RunContivKSRVnfToNodeMappingWatcher: deleting key: %s ", resp.GetKey())
+				s.ConfigTransactionStart()
 				s.VNFToNodeStateDelete(resp.GetKey(), true)
+				s.ConfigTransactionEnd()
 			}
 		}
 	}

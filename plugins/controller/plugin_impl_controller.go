@@ -182,11 +182,10 @@ func (s *Plugin) AfterInit() error {
 	// unnessarily
 
 	s.ConfigTransactionStart()
-	defer s.ConfigTransactionEnd()
-
 	if err := s.RenderConfig(); err != nil {
 		os.Exit(1)
 	}
+	s.ConfigTransactionEnd()
 
 	s.StartWatchers()
 
