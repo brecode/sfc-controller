@@ -171,16 +171,18 @@ func (s *Plugin) RenderNodeInterfaces(n *controller.Node,
 		// 		s.ConfigTransactionAddVppEntry(nodeState.RenderedVppAgentEntries, vppKV)
 
 		case controller.IfTypeEthernet:
-			vppKV = vppagentapi.ConstructEthernetInterface(
-				vppAgent,
-				iFace.Name,
-				iFace.IpAddresses,
-				iFace.MacAddress,
-				s.ResolveMtu(iFace.Mtu),
-				iFace.AdminStatus,
-				s.ResolveRxMode(iFace.RxMode))
-			nodeState.RenderedVppAgentEntries =
-				s.ConfigTransactionAddVppEntry(nodeState.RenderedVppAgentEntries, vppKV)
+			if !ContivKSREnabled { // do not configure the phys if as contiv already did this
+				vppKV = vppagentapi.ConstructEthernetInterface(
+					vppAgent,
+					iFace.Name,
+					iFace.IpAddresses,
+					iFace.MacAddress,
+					s.ResolveMtu(iFace.Mtu),
+					iFace.AdminStatus,
+					s.ResolveRxMode(iFace.RxMode))
+				nodeState.RenderedVppAgentEntries =
+					s.ConfigTransactionAddVppEntry(nodeState.RenderedVppAgentEntries, vppKV)
+			}
 		}
 
 		log.Infof("RenderNodeInterfaces: vswitch: %s, ifType: %s, vppKV: %v",
@@ -381,7 +383,7 @@ func (s *Plugin) NodeRenderVxlanStaticRoutes(fromNode, toNode,
 	OutgoingInterfaceLabel string) []*controller.RenderedVppAgentEntry {
 
 	var renderedEntries []*controller.RenderedVppAgentEntry
-	
+
 	// depending on the number of ethernet/label:vxlan interfaces on the source node and
 	// the number of ethernet/label:vxlan inerfaces on the dest node, a set of static
 	// routes will be created
@@ -390,39 +392,39 @@ func (s *Plugin) NodeRenderVxlanStaticRoutes(fromNode, toNode,
 
 	n1 := s.ramConfigCache.Nodes[fromNode]
 
-	// make sure there is a loopback i/f sntry for this vxlan endpoint
+	// make sure there is a loopback i/f entry for this vxlan endpoint
 	vppKV := vppagentapi.ConstructLoopbackInterface(n1.Name,
-		"IF_VXLAN_LOOPBACK_" + fromNode,
-		[]string {fromVxlanAddress},
+		"IF_VXLAN_LOOPBACK_"+fromNode,
+		[]string{fromVxlanAddress},
 		"",
 		s.ramConfigCache.SysParms.Mtu,
 		controller.IfAdminStatusEnabled,
 		s.ramConfigCache.SysParms.RxMode)
-		renderedEntries = s.ConfigTransactionAddVppEntry(renderedEntries, vppKV)
+	renderedEntries = s.ConfigTransactionAddVppEntry(renderedEntries, vppKV)
 
 	n2 := s.ramConfigCache.Nodes[toNode]
 
 	for _, node1Iface := range n1.Interfaces {
 		if node1Iface.IfType != controller.IfTypeEthernet ||
 			!(isLabelInCustomLabels(node1Iface.CustomLabels, OutgoingInterfaceLabel) ||
-			len(n1.Interfaces) == 1) { // if only one ethernet if, it does not need the label
+				len(n1.Interfaces) == 1) { // if only one ethernet if, it does not need the label
 			continue
 		}
 		for _, node2Iface := range n2.Interfaces {
 			if node2Iface.IfType != controller.IfTypeEthernet ||
 				!(isLabelInCustomLabels(node2Iface.CustomLabels, OutgoingInterfaceLabel) ||
-				len(n2.Interfaces) == 1) {  // if only one ethernet if, it does not need the label
+					len(n2.Interfaces) == 1) { // if only one ethernet if, it does not need the label
 				continue
 			}
 
-			l3sr := &controller.L3VRFRoute {
-				VrfId: 0,
-				Description: fmt.Sprintf("L3VRF_VXLAN Node:%s to Node:%s", fromNode, toNode),
-				DstIpAddr: toVxlanAddress, // des node vxlan address
-				NextHopAddr: node2Iface.IpAddresses[0],
+			l3sr := &controller.L3VRFRoute{
+				VrfId:             0,
+				Description:       fmt.Sprintf("L3VRF_VXLAN Node:%s to Node:%s", fromNode, toNode),
+				DstIpAddr:         toVxlanAddress, // des node vxlan address
+				NextHopAddr:       node2Iface.IpAddresses[0],
 				OutgoingInterface: node1Iface.Name,
-				Weight: s.ramConfigCache.SysParms.DefaultStaticRouteWeight,
-				Preference: s.ramConfigCache.SysParms.DefaultStaticRoutePreference,
+				Weight:            s.ramConfigCache.SysParms.DefaultStaticRouteWeight,
+				Preference:        s.ramConfigCache.SysParms.DefaultStaticRoutePreference,
 			}
 			vppKV := vppagentapi.ConstructStaticRoute(n1.Name, l3sr)
 			renderedEntries = s.ConfigTransactionAddVppEntry(renderedEntries, vppKV)
@@ -430,4 +432,3 @@ func (s *Plugin) NodeRenderVxlanStaticRoutes(fromNode, toNode,
 	}
 	return renderedEntries
 }
-
