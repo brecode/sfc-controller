@@ -118,6 +118,9 @@ func (s *Plugin) VNFServiceMeshesCreate(VNFServiceMeshes []controller.VNFService
 // VNFServiceMeshAllocateVxlanAddress allocates a free address from the pool
 func (s *Plugin) VNFServiceMeshAllocateVxlanAddress(poolName string, nodeName string) (string, error) {
 	
+	if poolName == "" { // no pool specified ... try the hard coded vxlan endpoints in the node i/f list
+		return s.FindVxlanIPaddress(nodeName)
+	}
 	if vxlanIPAddress, exists := s.ramConfigCache.VNFServiceMeshVxLanAddresses[nodeName]; exists {
 		return vxlanIPAddress, nil
 	}

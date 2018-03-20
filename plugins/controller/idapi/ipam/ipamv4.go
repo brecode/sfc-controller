@@ -106,8 +106,8 @@ func (ipv4Pool *Ipv4Pool) AllocateFromPool() (string, uint32, error) {
 	ipAddrStr := fmt.Sprintf("%d.", (ipAddru32>>24)&0xFF) +
 		fmt.Sprintf("%d.", (ipAddru32>>16)&0xFF) +
 		fmt.Sprintf("%d.", (ipAddru32>>8)&0xFF) +
-		fmt.Sprintf("%d", (ipAddru32)&0xFF) +
-		fmt.Sprintf("/%d", ipv4Pool.numBitsInMask)
+		fmt.Sprintf("%d", (ipAddru32)&0xFF)// +
+		//fmt.Sprintf("/%d", ipv4Pool.numBitsInMask)
 
 	fmt.Println("AllocateFromSubnet: ", ipAddrStr, freeBit)
 

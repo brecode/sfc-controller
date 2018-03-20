@@ -4,39 +4,44 @@ description: 2 vnf chains spanning 2 hosts, memif's and vxlan tunnels
 ipam_pools: # allocate internode vxlan mesh enpoints from a pool
   - name: vxlan_loopback_pool
     scope: system
-    network: 192.168.20.0/24 # allocate ip's from 192.168.20.30 to 192.168.20.40
-    start_range: 30
-    end_range: 40
+    network: 192.168.30.0/24 # allocate ip's from 192.168.30.200 to 192.168.30.205
+    start_range: 200
+    end_range: 205
 
-vnf_to_node_map: # this mapping can be static or supplied by k8s discovering pod placement
+vnf_to_node_map:
   - vnf: vnf1
-    node: k8s-master
+    node: ts1-host4
   - vnf: vnf2
-    node: k8s-worker1
-  - vnf: vnf3
-    node: k8s-master
-  - vnf: vnf4
-    node: k8s-worker1
+    node: ts1-host3
 
 nodes:
-  - name: k8s-master
+  - name: ts1-host4
     node_type: host
     interfaces:
-      - name: GigabitEthernet13/0/1
+      - name: GigabitEthernet2/0/1
         if_type: ethernet
         ip_addresses:
-          - "10.100.1.1/24"
-        mac_address: 02:00:00:00:00:01
+          - "192.168.16.1/24"
+        custom_labels:
+          - vxlan
+      - name: vxlan_endpoint
+        if_type: vxlan_tunnel
+        ip_addresses:
+          - "200.200.200.1/24"
 
-  - name: k8s-worker1
+  - name: ts1-host3
     node_type: host
     interfaces:
-      - name: GigabitEthernet13/0/2
+      - name: GigabitEthernet2/0/2
         if_type: ethernet
         ip_addresses:
-          - "10.100.2.1/24"
-        mac_address: 02:00:00:00:00:02
-
+          - "192.168.16.2/24"
+        custom_labels:
+          - vxlan          
+      - name: vxlan_endpoint
+        if_type: vxlan_tunnel
+        ip_addresses:
+          - "200.200.200.2/24"
 vnf_services:
   - name: l2pp_service_chain1
     vnfs:
@@ -66,30 +71,6 @@ vnf_services:
             interface: port1
           - vnf: vnf2
             interface: port1
-  - name: l2pp_service_chain2
-    vnfs:
-      - name: vnf3
-        vnf_type: vppcontainer
-        interfaces:
-          - name: port1
-            if_type: memif
-            ip_addresses:
-              - "10.0.10.1/24"
-      - name: vnf4
-        vnf_type: vppcontainer
-        interfaces:
-          - name: port1
-            if_type: memif
-            ip_addresses:
-              - "10.0.10.2/24"
-    connections:
-      - conn_type: l2pp
-        vnf_service_mesh: inter_node_vxlan_mesh
-        interfaces:
-          - vnf: vnf3
-            interface: port1
-          - vnf: vnf4
-            interface: port1
 
 vnf_service_meshes:
   - name: inter_node_vxlan_mesh
@@ -99,3 +80,4 @@ vnf_service_meshes:
       vni_range_start: 5000
       vni_range_end: 5999
       loopback_ipam_pool_name: vxlan_loopback_pool
+      outgoing_interface_label: vxlan

@@ -34,6 +34,7 @@ func (s *Plugin) nodeValidateInterfaces(nodeName string, iFaces []*controller.In
 	for _, iFace := range iFaces {
 		switch iFace.IfType {
 		case controller.IfTypeEthernet:
+		case controller.IfTypeVxlanTunnel:
 		default:
 			return fmt.Errorf("node/if: %s/%s has invalid if type '%s'",
 				nodeName, iFace.Name, iFace.IfType)
@@ -53,6 +54,30 @@ func (s *Plugin) nodeValidateInterfaces(nodeName string, iFaces []*controller.In
 	}
 
 	return nil
+}
+
+// FindVxlanIPaddress looks up the vxlan ip address for this node in the if list
+func (s *Plugin) FindVxlanIPaddress(nodeName string) (string, error) {
+
+	n, exists := s.ramConfigCache.Nodes[nodeName]
+	if !exists {
+		return "", fmt.Errorf("no vxlan ip address configured for node: %s", nodeName)
+	}
+	for _, iFace := range n.Interfaces {
+		switch iFace.IfType {
+		case controller.IfTypeVxlanTunnel:
+			for _, ipAddress := range iFace.IpAddresses {
+				ip, _, err := net.ParseCIDR(ipAddress)
+				if err == nil {
+					log.Debugf("FindVxlanIPaddress: node: %s, found vxlan iupaddr: %s",
+						nodeName, ip)
+					return ip.String(), nil
+				}
+			}
+		}
+	}
+
+	return "", fmt.Errorf("no vxlan ip address found for node: %s", nodeName)
 }
 
 // NodeValidate validates all the fields
@@ -158,18 +183,6 @@ func (s *Plugin) RenderNodeInterfaces(n *controller.Node,
 
 	for _, iFace := range iFaces {
 		switch iFace.IfType {
-		// case controller.IfTypeLoopBack:
-		// 	vppKV = vppagentapi.ConstructLoopbackInterface(
-		// 		vppAgent,
-		// 		iFace.Name,
-		// 		iFace.IpAddresses,
-		// 		iFace.MacAddress,
-		// 		s.ResolveMtu(iFace.Mtu),
-		// 		iFace.AdminStatus,
-		// 		s.ResolveRxMode(iFace.RxMode))
-		// 	nodeState.RenderedVppAgentEntries =
-		// 		s.ConfigTransactionAddVppEntry(nodeState.RenderedVppAgentEntries, vppKV)
-
 		case controller.IfTypeEthernet:
 			if !ContivKSREnabled { // do not configure the phys if as contiv already did this
 				vppKV = vppagentapi.ConstructEthernetInterface(
@@ -184,7 +197,6 @@ func (s *Plugin) RenderNodeInterfaces(n *controller.Node,
 					s.ConfigTransactionAddVppEntry(nodeState.RenderedVppAgentEntries, vppKV)
 			}
 		}
-
 		log.Infof("RenderNodeInterfaces: vswitch: %s, ifType: %s, vppKV: %v",
 			vppAgent, iFace.IfType, vppKV)
 	}
