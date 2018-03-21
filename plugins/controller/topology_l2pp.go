@@ -184,9 +184,29 @@ func (s *Plugin) renderToplogySegmentL2PPInterNode(vs *controller.VNFService,
 		xconn[0][i] = ifName
 	}
 
-	// hack for now ... only inter-node tunnel supported
-	if vnfServiceMesh.ServiceMeshType != controller.VNFServiceMeshTypeMesh &&
-		vnfServiceMesh.ConnectionType != controller.VNFServiceMeshConnectionTypeVxlan {
+	switch vnfServiceMesh.ConnectionType {
+	case controller.VNFServiceMeshConnectionTypeVxlan:
+		switch vnfServiceMesh.ServiceMeshType {
+		case controller.VNFServiceMeshTypeMesh:
+			return s.renderToplogyL2PPVxlanMesh(vs,
+				conn,
+				connIndex,
+				vnfInterfaces,
+				vnfServiceMesh,
+				v2n,
+				xconn,
+				vsState)
+		case controller.VNFServiceMeshTypeHubAndSpoke:
+			msg := fmt.Sprintf("vnf-service: %s, conn: %d, %s/%s to %s/%s service mesh: %s type not supported for L2PP",
+				vs.Name,
+				connIndex,
+				conn.Interfaces[0].Vnf, conn.Interfaces[0].Interface,
+				conn.Interfaces[1].Vnf, conn.Interfaces[1].Interface,
+				vnfServiceMesh.Name)
+			s.AppendStatusMsgToVnfService(msg, vsState)
+			return fmt.Errorf(msg)
+		}
+	default:
 		msg := fmt.Sprintf("vnf-service: %s, conn: %d, %s/%s to %s/%s service mesh: %s type not implemented",
 			vs.Name,
 			connIndex,
@@ -195,90 +215,6 @@ func (s *Plugin) renderToplogySegmentL2PPInterNode(vs *controller.VNFService,
 			vnfServiceMesh.Name)
 		s.AppendStatusMsgToVnfService(msg, vsState)
 		return fmt.Errorf(msg)
-	}
-
-	// create the vxlan endpoints
-	vniAllocator, exists := s.ramConfigCache.VNFServiceMeshVniAllocators[vnfServiceMesh.Name]
-	if !exists {
-		msg := fmt.Sprintf("vnf-service: %s, conn: %d, %s/%s to %s/%s service mesh: %s out of vni's",
-			vs.Name,
-			connIndex,
-			conn.Interfaces[0].Vnf, conn.Interfaces[0].Interface,
-			conn.Interfaces[1].Vnf, conn.Interfaces[1].Interface,
-			vnfServiceMesh.Name)
-		s.AppendStatusMsgToVnfService(msg, vsState)
-		return fmt.Errorf(msg)
-	}
-	vni, err := vniAllocator.AllocateVni()
-	if err != nil {
-		msg := fmt.Sprintf("vnf-service: %s, conn: %d, %s/%s to %s/%s service mesh: %s out of vni's",
-			vs.Name,
-			connIndex,
-			conn.Interfaces[0].Vnf, conn.Interfaces[0].Interface,
-			conn.Interfaces[1].Vnf, conn.Interfaces[1].Interface,
-			vnfServiceMesh.Name)
-		s.AppendStatusMsgToVnfService(msg, vsState)
-		return fmt.Errorf(msg)
-	}
-	for i := 0; i < 2; i++ {
-
-		from := i
-		to := ^i&1
-
-		ifName := fmt.Sprintf("IF_VXLAN_L2PP_FROM_%s_%s_%s_TO_%s_%s_%s_VSRVC_%s_CONN_%d_VNI_%d",
-			v2n[from].Node, conn.Interfaces[from].Vnf, conn.Interfaces[from].Interface,
-			v2n[to].Node, conn.Interfaces[to].Vnf, conn.Interfaces[to].Interface,
-			vs.Name, connIndex, vni)
-
-		xconn[1][i] = ifName
-
-		vxlanIPFromAddress, err := s.VNFServiceMeshAllocateVxlanAddress(
-			vnfServiceMesh.VxlanMeshParms.LoopbackIpamPoolName, v2n[i].Node)
-		if err != nil {
-			msg := fmt.Sprintf("vnf-service: %s, conn: %d, %s/%s to %s/%s service mesh: %s, %s",
-				vs.Name,
-				connIndex,
-				conn.Interfaces[0].Vnf, conn.Interfaces[0].Interface,
-				conn.Interfaces[1].Vnf, conn.Interfaces[1].Interface,
-				vnfServiceMesh.Name, err)
-			s.AppendStatusMsgToVnfService(msg, vsState)
-			return fmt.Errorf(msg)
-		}
-		vxlanIPToAddress, err := s.VNFServiceMeshAllocateVxlanAddress(
-			vnfServiceMesh.VxlanMeshParms.LoopbackIpamPoolName, v2n[^i&1].Node)
-		if err != nil {
-			msg := fmt.Sprintf("vnf-service: %s, conn: %d, %s/%s to %s/%s service mesh: %s %s",
-				vs.Name,
-				connIndex,
-				conn.Interfaces[0].Vnf, conn.Interfaces[0].Interface,
-				conn.Interfaces[1].Vnf, conn.Interfaces[1].Interface,
-				vnfServiceMesh.Name, err)
-			s.AppendStatusMsgToVnfService(msg, vsState)
-			return fmt.Errorf(msg)
-		}
-
-		vppKV := vppagentapi.ConstructVxlanInterface(
-			v2n[i].Node,
-			ifName,
-			vni,
-			vxlanIPFromAddress,
-			vxlanIPToAddress)
-		vsState.RenderedVppAgentEntries =
-			s.ConfigTransactionAddVppEntry(vsState.RenderedVppAgentEntries, vppKV)
-
-		renderedEntries := s.NodeRenderVxlanStaticRoutes(v2n[i].Node, v2n[^i&1].Node,
-			vxlanIPFromAddress, vxlanIPToAddress,
-			vnfServiceMesh.VxlanMeshParms.OutgoingInterfaceLabel)
-
-		vsState.RenderedVppAgentEntries = append(vsState.RenderedVppAgentEntries,
-			renderedEntries...)
-	}
-
-	// create xconns between vswitch side of the container interfaces and the vxlan ifs
-	for i := 0; i < 2; i++ {
-		vppKVs := vppagentapi.ConstructXConnect(v2n[i].Node, xconn[0][i], xconn[1][i])
-		vsState.RenderedVppAgentEntries =
-			s.ConfigTransactionAddVppEntries(vsState.RenderedVppAgentEntries, vppKVs)
 	}
 
 	return nil

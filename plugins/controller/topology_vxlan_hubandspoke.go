@@ -22,8 +22,8 @@ import (
 	"github.com/ligato/vpp-agent/plugins/defaultplugins/common/model/l2"
 )
 
-// renderToplogySegmentLMPPInterNode renders this L2MP connection between nodes
-func (s *Plugin) renderToplogyVxlanHubAndSpoke(vs *controller.VNFService,
+// renderToplogyL2MPVxlanHubAndSpoke renders these L2MP tunnels between hub and nodes
+func (s *Plugin) renderToplogyL2MPVxlanHubAndSpoke(vs *controller.VNFService,
 	conn *controller.Connection,
 	connIndex uint32,
 	vnfInterfaces []*controller.Interface,
@@ -75,11 +75,11 @@ func (s *Plugin) renderToplogyVxlanHubAndSpoke(vs *controller.VNFService,
 
 			var ifName string
 			if i == 0 {
-				ifName = fmt.Sprintf("IF_VXLAN_FROM_HUB_%s_TO_SPOKE_%s_VSRVC_%s_CONN_%d_VNI_%d",
-					fromNode, toNode, vs.Name, connIndex, vni)
+				ifName = fmt.Sprintf("IF_VXLAN_VSRVC_%s_CONN_%d_FROM_HUB_%s_TO_SPOKE_%s_VNI_%d",
+					vs.Name, connIndex, fromNode, toNode, vni)
 			} else {
-				ifName = fmt.Sprintf("IF_VXLAN_FROM_SPOKE_%s_TO_HUB_%s_VSRVC_%s_CONN_%d_VNI_%d",
-					fromNode, toNode, vs.Name, connIndex, vni)
+				ifName = fmt.Sprintf("IF_VXLAN_VSRVC_%s_CONN_%d_FROM_SPOKE_%s_TO_HUB_%s_VNI_%d",
+					vs.Name, connIndex, fromNode, toNode, vni)
 			}
 
 			vxlanIPFromAddress, err := s.VNFServiceMeshAllocateVxlanAddress(
@@ -142,3 +142,4 @@ func (s *Plugin) renderToplogyVxlanHubAndSpoke(vs *controller.VNFService,
 
 	return nil
 }
+

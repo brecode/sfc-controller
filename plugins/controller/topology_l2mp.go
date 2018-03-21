@@ -146,7 +146,7 @@ func (s *Plugin) renderToplogySegmentL2MPSameNode(vs *controller.VNFService,
 			singleSpokeMap := make(map[string]bool)
 			singleSpokeMap[nodeName] = true
 
-			return s.renderToplogyVxlanHubAndSpoke(vs,
+			return s.renderToplogyL2MPVxlanHubAndSpoke(vs,
 				conn,
 				connIndex,
 				vnfInterfaces,
@@ -199,7 +199,7 @@ func (s *Plugin) renderL2BD(vs *controller.VNFService,
 		}
 		vppKV := vppagentapi.ConstructL2BD(
 			nodeName,
-			"L2BD_"+vs.Name+fmt.Sprintf("_CONN_%d", connIndex+1),
+			fmt.Sprintf("L2BD_%s_CONN_%d", vs.Name, connIndex+1),
 			l2bdIFs,
 			bdParms)
 		vsState.RenderedVppAgentEntries =
@@ -252,7 +252,7 @@ func (s *Plugin) renderToplogySegmentL2MPInterNode(vs *controller.VNFService,
 	case controller.VNFServiceMeshConnectionTypeVxlan:
 		switch vnfServiceMesh.ServiceMeshType {
 		case controller.VNFServiceMeshTypeMesh:
-			return s.renderToplogyVxlanMesh(vs,
+			return s.renderToplogyL2MPVxlanMesh(vs,
 				conn,
 				connIndex,
 				vnfInterfaces,
@@ -263,7 +263,7 @@ func (s *Plugin) renderToplogySegmentL2MPInterNode(vs *controller.VNFService,
 				l2bdIFs,
 				vsState)
 		case controller.VNFServiceMeshTypeHubAndSpoke:
-			return s.renderToplogyVxlanHubAndSpoke(vs,
+			return s.renderToplogyL2MPVxlanHubAndSpoke(vs,
 				conn,
 				connIndex,
 				vnfInterfaces,
